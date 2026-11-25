@@ -211,6 +211,13 @@
   .menu button:hover{background:var(--gray-soft)}
   .toast{position:fixed;bottom:24px;left:50%;transform:translate(-50%,16px);background:var(--ink);color:var(--bg);padding:11px 18px;border-radius:10px;opacity:0;transition:opacity .25s var(--ease),transform .25s var(--ease);z-index:99;max-width:480px;font-weight:600;font-size:13px;pointer-events:none}
   .toast.show{opacity:1;transform:translate(-50%,0)}
+  .toast.act{pointer-events:auto;display:flex;align-items:center;gap:16px;padding-right:10px;white-space:nowrap}
+  .toast-btn{background:none;border:0;color:var(--brand);font:inherit;font-weight:800;cursor:pointer;padding:6px 8px;border-radius:8px}
+  .toast-btn:hover{background:rgba(255,255,255,.12)}
+  .drivebox{padding:14px 16px;border:1px solid var(--line);border-radius:var(--r-m);background:var(--panel-2);margin-bottom:14px}
+  .drv-ic{width:26px;height:26px;fill:none;stroke:var(--brand);stroke-width:1.6;stroke-linejoin:round;flex:none;margin-top:2px}
+  .drv-list{display:flex;flex-direction:column;gap:8px;max-height:52vh;overflow:auto}
+  .drv-item{display:flex;align-items:center;gap:12px;justify-content:space-between;padding:10px 12px;border:1px solid var(--line);border-radius:var(--r-m);background:var(--panel-2)}
   .hint{font-size:12px;color:var(--muted);margin-top:6px}
   .actions-cell{white-space:nowrap;text-align:right}
   .drop{border:1.5px dashed var(--brand-line);background:var(--brand-soft);border-radius:var(--r-m);padding:14px 16px;display:flex;gap:14px;align-items:center;margin-bottom:18px;transition:border-color .18s var(--ease)}
@@ -541,13 +548,13 @@ let DB;
    Every list is a Firestore collection (one document per item), so 4 phones can
    add and change things at the same time without overwriting each other.
    Settings that belong to one phone only (theme, PIN) stay on that phone. */
-const COLS = ["orders","products","restocks","expenses","partners","quotes"];
+const COLS = ["orders","products","restocks","expenses","partners","quotes","trash"];
 const LOCAL_SETTING_KEYS = ["theme","pinHash","pinSalt","recoveryHash","backupFolder","lastExtraBackup","lastExtraBackupDay"];
 const CLOUD = { app:null, auth:null, db:null, user:null, ready:false, unsub:[], last:{}, lastSettings:"", pending:0, online:navigator.onLine };
 function localSettings(){ try{ return JSON.parse(localStorage.getItem("coverlanka_local")||"{}"); }catch(e){ return {}; } }
 function saveLocalSettings(){ const o={}; LOCAL_SETTING_KEYS.forEach(k=>{ if(DB.settings[k]!=null) o[k]=DB.settings[k]; }); try{ localStorage.setItem("coverlanka_local", JSON.stringify(o)); }catch(e){} }
 function sharedSettings(){ const s={...DB.settings}; LOCAL_SETTING_KEYS.forEach(k=>delete s[k]); return { settings:s, lastSummary:DB.lastSummary||null, startupLoaded:!!DB.startupLoaded, version:DB.version||1 }; }
-function emptyDB(){ return { version:2, settings:{}, products:[], restocks:[], orders:[], expenses:[], partners:[], quotes:[], startupLoaded:true }; }
+function emptyDB(){ return { version:2, settings:{}, products:[], restocks:[], orders:[], expenses:[], partners:[], quotes:[], trash:[], startupLoaded:true }; }
 
 function setSyncState(){
   const st = !CLOUD.online ? "off" : (CLOUD.pending>0 ? "busy" : "ok");
@@ -671,11 +678,12 @@ function showFirstRun(){
 }
 function uploadAll(d){
   const keepLocal={}; LOCAL_SETTING_KEYS.forEach(k=>{ if(DB.settings[k]!=null) keepLocal[k]=DB.settings[k]; });
+  ["lastDriveBackup","lastDriveBackupDay"].forEach(k=>{ if(DB.settings[k]!=null) keepLocal[k]=DB.settings[k]; });   // a restore must not undo "already backed up today"
   d=migrate(d);
   DB={...emptyDB(), ...d}; COLS.forEach(c=>{ DB[c]=DB[c]||[]; });
   DB.settings={...DB.settings, ...keepLocal};
-  COLS.forEach(c=>CLOUD.last[c]=new Map()); CLOUD.lastSettings="";
-  saveDB();
+  COLS.forEach(c=>{ if(!CLOUD.last[c]) CLOUD.last[c]=new Map(); }); CLOUD.lastSettings="";
+  saveDB();   // the "last" maps know what is online now, so anything not in the backup gets removed for everyone
   const mo=Math.max(0,...DB.orders.map(o=>num(o.no))), mq=Math.max(0,...DB.quotes.map(q=>num(q.no)));
   window.FB.setDoc(window.FB.doc(CLOUD.db,"meta","counters"),{order:mo,quote:mq},{merge:true}).catch(()=>{});
   $("#boot").classList.remove("on"); toast("All set — data is online"); render();
@@ -703,10 +711,83 @@ async function boot(){
     migrate(DB);
     if(JSON.stringify(sharedSettings())!==before || DB.products.some(p=>p.weightKg==null)) saveDB();
     $("#boot").classList.remove("on");
+    purgeTrash();
     render();
     if(DB.settings.pinHash) showLock();
+    setTimeout(autoDriveBackup, 4000);
   });
 }
+/* ================= GOOGLE DRIVE BACKUP =================
+   A small Google Apps Script (in the team's Google Drive) receives a full copy
+   of the data once a day and keeps the last 30 days in "CoverLanka Backups".
+   It only accepts requests from someone signed in to the team account. */
+function driveUrl(){ return (window.CL_CONFIG&&CL_CONFIG.driveBackupUrl)||""; }
+function backupData(){
+  const c=JSON.parse(JSON.stringify(DB)); c.settings=c.settings||{};
+  c.settings.claudeKey=""; LOCAL_SETTING_KEYS.forEach(k=>delete c.settings[k]);
+  c.backupAt=new Date().toISOString(); return c;
+}
+async function driveCall(body){
+  const url=driveUrl(); if(!url) throw new Error("Drive backup is not set up");
+  if(!CLOUD.user||!CLOUD.user.getIdToken) throw new Error("Sign in first");
+  if(!navigator.onLine) throw new Error("No internet connection");
+  const token=await CLOUD.user.getIdToken();
+  const r=await fetch(url,{ method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify({...body, token}) });
+  let j; try{ j=await r.json(); }catch(e){ throw new Error("Google Drive did not answer properly"); }
+  if(!j.ok) throw new Error(j.error||"Drive backup failed");
+  return j;
+}
+async function driveBackup(tag){
+  const now=new Date(), hm=String(now.getHours()).padStart(2,"0")+String(now.getMinutes()).padStart(2,"0");
+  const name="coverlanka-backup-"+today()+(tag?"-"+tag+"-"+hm:"")+".json";
+  const j=await driveCall({ action:"save", name, data:JSON.stringify(backupData()) });
+  DB.settings.lastDriveBackup=now.toISOString();
+  if(!tag) DB.settings.lastDriveBackupDay=today();
+  saveDB(); return j;
+}
+let _autoBk=false;
+async function autoDriveBackup(){
+  if(_autoBk||!driveUrl()||!CLOUD.ready||!navigator.onLine||document.hidden) return;
+  if(DB.settings.lastDriveBackupDay===today()) return;           // someone already backed up today
+  if(!DB.orders.length && !DB.products.length) return;
+  _autoBk=true;
+  try{ await driveBackup(""); if(page==="settings") render(); }
+  catch(e){ console.warn("Drive backup:",e.message); }
+  finally{ _autoBk=false; }
+}
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden) setTimeout(autoDriveBackup,3000); });
+setInterval(autoDriveBackup, 30*60*1000);
+/* a safety copy before anything that replaces all the data */
+async function safetyBackup(tag){
+  if(driveUrl()){ try{ await driveBackup(tag); return "drive"; }catch(e){ console.warn(e); } }
+  download("coverlanka-backup-"+today()+"-"+tag+".json", JSON.stringify(backupData(),null,1), "application/json");
+  return "file";
+}
+function niceTime(iso){ if(!iso) return ""; const d=new Date(iso); return d.toLocaleString("en-GB",{day:"numeric",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}); }
+function niceSize(b){ b=num(b); return b>1048576?(b/1048576).toFixed(1)+" MB":Math.max(1,Math.round(b/1024))+" KB"; }
+async function openDriveRestore(){
+  modalKind="drive";
+  $("#modal").innerHTML=`<h2>Restore from Google Drive</h2><p class="muted" style="margin-top:0">Choose a day. The app goes back to exactly how it was then, for everyone.</p><div id="dr_list"><div class="muted"><span class="spin"></span>Loading backups…</div></div><div class="actions"><button class="btn" id="dr_close">Close</button></div>`;
+  openModalBg(); $("#dr_close").onclick=closeModal;
+  try{
+    const j=await driveCall({action:"list"}); const files=j.files||[];
+    if(modalKind!=="drive") return;
+    $("#dr_list").innerHTML = files.length ? `<div class="drv-list">${files.map(f=>`<div class="drv-item"><div><div style="font-weight:700">${esc(niceTime(f.time))}</div><div class="hint" style="margin:2px 0 0">${esc(f.name)} · ${esc(niceSize(f.size))}</div></div><button class="btn sm" data-drid="${esc(f.id)}" data-drt="${esc(niceTime(f.time))}">Restore</button></div>`).join("")}</div>
+      ${j.folderUrl?`<p class="hint"><a href="${esc(j.folderUrl)}" target="_blank" rel="noopener">Open the backup folder in Google Drive</a></p>`:""}` : `<div class="empty">No backups yet.</div>`;
+    document.querySelectorAll("[data-drid]").forEach(b=>b.onclick=async ()=>{
+      if(!confirm("Replace ALL data (for everyone) with the backup from "+b.dataset.drt+"?\n\nA copy of the data as it is now is saved to Google Drive first, so this can be undone.")) return;
+      b.disabled=true; b.innerHTML='<span class="spin"></span>Restoring…';
+      try{
+        const g=await driveCall({action:"get", id:b.dataset.drid}); const d=JSON.parse(g.data);
+        if(!d.orders||!d.products) throw new Error("This is not a CoverLanka backup");
+        await safetyBackup("before-restore");
+        const key=DB.settings.claudeKey; d.settings=d.settings||{}; d.settings.claudeKey=key;
+        closeModal(); uploadAll(d); toast("Restored the backup from "+b.dataset.drt);
+      }catch(e){ b.disabled=false; b.textContent="Restore"; alert("Could not restore: "+e.message); }
+    });
+  }catch(e){ if($("#dr_list")) $("#dr_list").innerHTML=`<div class="alert" style="margin:0">${esc(e.message)}</div>`; }
+}
+
 async function signOutTeam(){ if(!confirm("Sign out of CoverLanka on this device?")) return; await window.FB.signOut(CLOUD.auth); }
 
 /* ================= HELPERS ================= */
@@ -714,7 +795,47 @@ const $ = s => document.querySelector(s);
 function esc(v){ return String(v ?? "").replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 function num(v){ const n = parseFloat(v); return isNaN(n)?0:n; }
 function money(n){ n = Math.round(Number(n)||0); return (n<0?"-":"")+"Rs. "+Math.abs(n).toLocaleString("en-US"); }
-function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove("show"),2600); }
+function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.remove("act"); t.classList.add("show"); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove("show"),2600); }
+function toastUndo(msg, fn){
+  const t=$("#toast"); t.innerHTML=`<span>${esc(msg)}</span><button type="button" class="toast-btn">Undo</button>`;
+  t.classList.add("show","act"); clearTimeout(t._h);
+  t.querySelector("button").onclick=()=>{ clearTimeout(t._h); t.classList.remove("show","act"); fn(); };
+  t._h=setTimeout(()=>t.classList.remove("show","act"),7000);
+}
+
+/* ================= TRASH =================
+   Nothing is deleted straight away: it goes to the Trash (shared with the team)
+   and can be brought back for 30 days. */
+const TRASH_DAYS=30;
+const TRASH_KIND={orders:"Order",quotes:"Quotation",restocks:"Stock entry",expenses:"Expense",partners:"Partner",products:"Product"};
+function trashLabel(col,it){
+  if(col==="orders") return orderNo(it)+" — "+(it.customer||"");
+  if(col==="quotes") return quoteNo(it)+" — "+(it.customer||"");
+  if(col==="restocks"){ const p=product(it.productId); return (it.qty||0)+" × "+(p?p.name:"item")+" ("+(it.date||"")+")"; }
+  if(col==="expenses") return (it.description||it.category||"Expense")+" — "+money(it.amount);
+  return it.name||"";
+}
+function moveToTrash(col,id){
+  const it=(DB[col]||[]).find(x=>x.id===id); if(!it) return null;
+  DB[col]=DB[col].filter(x=>x.id!==id);
+  const t={ id:uid(), col, item:JSON.parse(JSON.stringify(it)), label:trashLabel(col,it), deletedAt:Date.now(), by:CLOUD.user?CLOUD.user.email:"" };
+  (DB.trash=DB.trash||[]).push(t); saveDB(); return t;
+}
+function restoreFromTrash(tid){
+  const t=(DB.trash||[]).find(x=>x.id===tid); if(!t) return false;
+  const arr=DB[t.col]||(DB[t.col]=[]); if(!arr.some(x=>x.id===t.item.id)) arr.push(t.item);
+  DB.trash=DB.trash.filter(x=>x.id!==tid); saveDB(); return true;
+}
+/* delete with an Undo button on the message */
+function trashIt(col,id,after){
+  const t=moveToTrash(col,id); if(after) after(); render();
+  if(t) toastUndo(TRASH_KIND[col]+" moved to Trash", ()=>{ restoreFromTrash(t.id); toast("Brought back"); render(); });
+}
+function purgeTrash(){
+  const cut=Date.now()-TRASH_DAYS*864e5, before=(DB.trash||[]).length;
+  DB.trash=(DB.trash||[]).filter(t=>num(t.deletedAt)>=cut);
+  if(DB.trash.length!==before) saveDB();
+}
 function product(id){ return DB.products.find(p=>p.id===id); }
 function orderNo(o){ return "CL-"+String(o.no).padStart(4,"0"); }
 function monthName(ym){ if(!ym) return "All time"; const [y,m]=ym.split("-"); return new Date(+y,+m-1,1).toLocaleString("en-US",{month:"long",year:"numeric"}); }
@@ -983,8 +1104,8 @@ function ordersTable(list, compact){
 }
 function deleteOrder(id){
   const o=DB.orders.find(x=>x.id===id); if(!o) return;
-  if(confirm("Delete order "+orderNo(o)+" for "+o.customer+"? This cannot be undone.\n(Tip: to cancel an order, set status to Cancelled instead.)")){
-    DB.orders=DB.orders.filter(x=>x.id!==o.id); saveDB(); toast("Order deleted"); render();
+  if(confirm("Delete order "+orderNo(o)+" for "+o.customer+"?\nIt goes to the Trash, and you can bring it back within 30 days.\n(Tip: to cancel an order, set status to Cancelled instead.)")){
+    trashIt("orders",o.id);
   }
 }
 function popMenu(btn, html, onPick){
@@ -1340,7 +1461,7 @@ function renderQuotes(){
     popMenu(b, `${q.orderId?"":`<button data-a="order" style="color:var(--brand-ink);font-weight:700">Accepted — make it an order</button>`}<button data-a="dup">Duplicate</button><button data-a="del" style="color:var(--red)">Delete quotation</button>`, a=>{
       if(a==="order") quoteToOrder(id);
       if(a==="dup"){ (async()=>{ const c=JSON.parse(JSON.stringify(q)); Object.assign(c,{id:uid(),no:await nextNumber("quote"),date:today(),validUntil:addDays(today(),14),status:"Draft",orderId:null}); DB.quotes.push(c); saveDB(); toast("Copied as "+quoteNo(c)); render(); })(); }
-      if(a==="del" && confirm("Delete quotation "+quoteNo(q)+"?")){ DB.quotes=DB.quotes.filter(x=>x.id!==id); saveDB(); toast("Quotation deleted"); render(); }
+      if(a==="del" && confirm("Delete quotation "+quoteNo(q)+"? It goes to the Trash for 30 days.")){ trashIt("quotes",id); }
     }); });
 }
 
@@ -1516,7 +1637,7 @@ function renderStock(){
   document.querySelectorAll("[data-pedit]").forEach(b=>b.onclick=()=>openProduct(b.dataset.pedit));
   document.querySelectorAll("[data-rdel]").forEach(b=>b.onclick=()=>{
     const r=DB.restocks.find(x=>x.id===b.dataset.rdel);
-    if(confirm("Remove this stock entry ("+r.qty+" items on "+r.date+")?")){ DB.restocks=DB.restocks.filter(x=>x.id!==r.id); saveDB(); render(); }
+    if(confirm("Remove this stock entry ("+r.qty+" items on "+r.date+")? It goes to the Trash for 30 days.")){ trashIt("restocks",r.id); }
   });
 }
 function openProduct(id){
@@ -1606,7 +1727,7 @@ function renderExpenses(){
   };
   $("#em").onchange=e=>{ state.expMonth=e.target.value; render(); };
   $("#emAll").onclick=()=>{ state.expMonth=state.expMonth?"":thisMonth(); render(); };
-  document.querySelectorAll("[data-edel]").forEach(b=>b.onclick=()=>{ if(confirm("Delete this expense?")){ DB.expenses=DB.expenses.filter(x=>x.id!==b.dataset.edel); saveDB(); render(); } });
+  document.querySelectorAll("[data-edel]").forEach(b=>b.onclick=()=>{ if(confirm("Delete this expense? It goes to the Trash for 30 days.")){ trashIt("expenses",b.dataset.edel); } });
   document.querySelectorAll("[data-eedit]").forEach(b=>b.onclick=()=>openExpense(b.dataset.eedit));
 }
 function openExpense(id){
@@ -1651,7 +1772,7 @@ function openPartner(id){
     <div class="actions">${p?`<button class="btn danger" id="pt_del">Remove</button><div class="spacer"></div>`:""}<button class="btn" id="pt_cancel">Cancel</button><button class="btn primary" id="pt_save">Save</button></div>`;
   openModalBg();
   $("#pt_cancel").onclick=closeModal;
-  if(p) $("#pt_del").onclick=()=>{ if(confirm("Remove "+p.name+"?")){ DB.partners=DB.partners.filter(x=>x.id!==p.id); saveDB(); closeModal(); render(); } };
+  if(p) $("#pt_del").onclick=()=>{ if(confirm("Remove "+p.name+"? It goes to the Trash for 30 days.")){ trashIt("partners",p.id,closeModal); } };
   $("#pt_save").onclick=()=>{ const d={name:$("#pt_name").value.trim()||"Partner",amount:num($("#pt_amt").value),date:$("#pt_date").value||today()};
     if(p) Object.assign(p,d); else (DB.partners=DB.partners||[]).push({id:uid(),...d}); saveDB(); closeModal(); toast("Saved"); render(); };
 }
@@ -1914,26 +2035,35 @@ function renderSettings(){
     </div>
 
     <div class="panel"><h3>Backup</h3>
-      <p style="margin-top:0">Everything saves automatically on this computer${window.desktop?", with a copy kept for each day":""}.<br><span class="muted">Data file: ${esc(path)}</span></p>
-      ${canFolder?`<div style="padding:14px 16px;border:1px solid var(--line);border-radius:var(--r-m);background:var(--panel-2);margin-bottom:14px">
-        <b>Automatic backup to Google Drive</b>
-        <p class="hint" style="margin:4px 0 10px">Install <b>Google Drive for desktop</b> on this laptop, then choose a folder inside Google Drive here. The app saves a backup there every day, and Google Drive uploads it.</p>
-        <div class="row"><span class="${S.backupFolder?"":"muted"}" style="font-weight:600">${S.backupFolder?esc(S.backupFolder):"No folder chosen"}</span><div class="spacer"></div>
-        <button class="btn" id="bf_pick">${S.backupFolder?"Change folder":"Choose folder"}</button>${S.backupFolder?`<button class="btn" id="bf_now">Back up now</button><button class="btn danger" id="bf_off">Stop</button>`:""}</div>
-        ${S.lastExtraBackup?`<div class="hint">Last copy: ${esc(S.lastExtraBackup)}</div>`:""}
-      </div>`:""}
+      <div class="drivebox">
+        <div class="row" style="align-items:flex-start"><svg class="drv-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3h8l6 10-4 7H6l-4-7z"/><path d="M8 3l6 10h8M2 13h12l-4 7"/></svg>
+          <div style="flex:1;min-width:200px"><b>Automatic backup to Google Drive</b>
+          ${driveUrl()?`<p class="hint" style="margin:4px 0 0">Every day, the first phone or laptop that opens the app saves a full copy to the <b>CoverLanka Backups</b> folder in Google Drive. The last 30 days are kept.</p>
+            <p style="margin:8px 0 0;font-weight:600">${S.lastDriveBackup?"Last backup: "+esc(niceTime(S.lastDriveBackup)):"No backup yet — the first one happens in a few seconds."}</p>`
+          :`<p class="hint" style="margin:4px 0 0">Not set up yet.</p>`}</div></div>
+        ${driveUrl()?`<div class="row" style="margin-top:12px"><button class="btn" id="dr_now">Back up now</button><button class="btn" id="dr_restore">Restore from Drive…</button></div>`:""}
+      </div>
       <div class="row">
         <button class="btn" id="b_exp">Download backup file</button>
         <button class="btn" id="b_imp">Restore from backup file…</button>
         <input type="file" id="b_file" accept=".json" style="display:none">
         <button class="btn" id="b_csv">Export orders (CSV)</button>
         <button class="btn" id="b_ccsv">Export customers (CSV)</button>
-        ${window.desktop&&window.desktop.openDataFolder?`<button class="btn" id="b_open">Open data folder</button>`:""}
       </div>
     </div>
 
+    <div class="panel"><h3>Trash</h3>
+      <p class="hint" style="margin-top:0">Deleted orders, quotations, stock entries, expenses and partners stay here for ${TRASH_DAYS} days, then they are removed for good.</p>
+      ${(DB.trash||[]).length?`<table><thead><tr><th>Item</th><th>Type</th><th>Deleted</th><th></th></tr></thead><tbody>
+        ${[...DB.trash].sort((a,b)=>b.deletedAt-a.deletedAt).map(t=>{ const left=Math.max(0,Math.ceil((num(t.deletedAt)+TRASH_DAYS*864e5-Date.now())/864e5));
+          return `<tr><td style="font-weight:600">${esc(t.label)}</td><td>${esc(TRASH_KIND[t.col]||t.col)}</td><td>${esc(niceTime(new Date(num(t.deletedAt)).toISOString()))}<div class="hint" style="margin:2px 0 0">${left} day${left===1?"":"s"} left</div></td>
+          <td class="actions-cell"><button class="btn sm" data-trr="${t.id}">Bring back</button> <button class="btn sm danger" data-trx="${t.id}">Delete forever</button></td></tr>`; }).join("")}
+      </tbody></table>
+      <div class="row" style="margin-top:12px"><div class="spacer"></div><button class="btn danger" id="tr_empty">Empty trash</button></div>`:`<div class="empty">Trash is empty.</div>`}
+    </div>
+
     <div class="panel"><h3>Start again</h3>
-      <p class="hint" style="margin-top:0">Deletes every order, product, stock entry, expense and partner. Download a backup first.</p>
+      <p class="hint" style="margin-top:0">Deletes every order, product, stock entry, expense and partner. A backup copy is saved first.</p>
       <button class="btn danger" id="b_reset">Delete all data</button>
     </div>`;
 
@@ -1989,10 +2119,14 @@ function renderSettings(){
   if($("#pin_off")) $("#pin_off").onclick=()=>{ if(confirm("Turn off the PIN? Anyone using this laptop will be able to open the app.")){ delete S.pinHash; delete S.recoveryHash; saveDB(); toast("PIN turned off"); render(); } };
   if($("#pin_change")) $("#pin_change").onclick=()=>{ delete S.pinHash; delete S.recoveryHash; saveDB(); render(); setTimeout(()=>$("#pin1")&&$("#pin1").focus(),50); };
 
-  // Google Drive folder
-  if($("#bf_pick")) $("#bf_pick").onclick=async ()=>{ const f=await window.desktop.chooseFolder(); if(f){ S.backupFolder=f; saveDB(); toast("Backups will go to this folder"); render(); } };
-  if($("#bf_now")) $("#bf_now").onclick=()=>{ saveDB(true); toast("Backup copied to the folder"); setTimeout(render,300); };
-  if($("#bf_off")) $("#bf_off").onclick=()=>{ S.backupFolder=""; saveDB(); render(); };
+  // Google Drive backup
+  if($("#dr_now")) $("#dr_now").onclick=async ()=>{ const b=$("#dr_now"); b.disabled=true; b.innerHTML='<span class="spin"></span>Backing up…';
+    try{ await driveBackup("manual"); toast("Backed up to Google Drive"); }catch(e){ alert("Backup failed: "+e.message); } render(); };
+  if($("#dr_restore")) $("#dr_restore").onclick=openDriveRestore;
+  // Trash
+  document.querySelectorAll("[data-trr]").forEach(b=>b.onclick=()=>{ if(restoreFromTrash(b.dataset.trr)){ toast("Brought back"); render(); } });
+  document.querySelectorAll("[data-trx]").forEach(b=>b.onclick=()=>{ const t=DB.trash.find(x=>x.id===b.dataset.trx); if(t&&confirm("Delete “"+t.label+"” forever? This cannot be undone.")){ DB.trash=DB.trash.filter(x=>x.id!==t.id); saveDB(); render(); } });
+  if($("#tr_empty")) $("#tr_empty").onclick=()=>{ if(confirm("Delete everything in the Trash forever? This cannot be undone.")){ DB.trash=[]; saveDB(); toast("Trash emptied"); render(); } };
 
   $("#b_exp").onclick=()=>{ const copy=JSON.parse(JSON.stringify(DB)); copy.settings.claudeKey=""; download("coverlanka-backup-"+today()+".json", JSON.stringify(copy,null,1), "application/json"); };
   $("#b_imp").onclick=()=>$("#b_file").click();
@@ -2000,16 +2134,15 @@ function renderSettings(){
     const f=e.target.files[0]; if(!f) return;
     const r=new FileReader(); r.onload=()=>{
       try{ const d=JSON.parse(r.result); if(!d.orders||!d.products) throw new Error("This is not a CoverLanka backup file");
-        if(confirm("Replace ALL online data (for everyone) with this backup ("+d.orders.length+" orders)?")){ const key=DB.settings.claudeKey; if(!d.settings) d.settings={}; if(!d.settings.claudeKey) d.settings.claudeKey=key; uploadAll(d); } }
+        if(confirm("Replace ALL online data (for everyone) with this backup ("+d.orders.length+" orders)?\nA copy of the data as it is now is saved first.")){ const key=DB.settings.claudeKey; if(!d.settings) d.settings={}; if(!d.settings.claudeKey) d.settings.claudeKey=key; safetyBackup("before-restore").then(()=>uploadAll(d)); } }
       catch(err){ alert("Could not read the backup: "+err.message); }
     }; r.readAsText(f);
   };
   $("#b_csv").onclick=exportOrdersCSV;
   $("#b_ccsv").onclick=exportCustomersCSV;
-  if($("#b_open")) $("#b_open").onclick=()=>window.desktop.openDataFolder();
   $("#b_reset").onclick=()=>{
-    if(confirm("This deletes every order, product, stock entry, expense and partner. Download a backup first!\n\nDelete everything?") && confirm("Are you really sure? This cannot be undone.")){
-      const d=defaultData(); d.settings.claudeKey=DB.settings.claudeKey; uploadAll(d); toast("All data deleted");
+    if(confirm("This deletes every order, product, stock entry, expense and partner, for everyone.\nA backup copy is saved first.\n\nDelete everything?") && confirm("Are you really sure?")){
+      safetyBackup("before-delete-all").then(where=>{ const d=defaultData(); d.settings.claudeKey=DB.settings.claudeKey; uploadAll(d); toast(where==="drive"?"All data deleted — a copy is in Google Drive":"All data deleted — a backup file was downloaded"); });
     }
   };
 }
