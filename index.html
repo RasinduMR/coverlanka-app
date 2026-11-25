@@ -214,6 +214,14 @@
   .toast.act{pointer-events:auto;display:flex;align-items:center;gap:16px;padding-right:10px;white-space:nowrap}
   .toast-btn{background:none;border:0;color:var(--brand);font:inherit;font-weight:800;cursor:pointer;padding:6px 8px;border-radius:8px}
   .toast-btn:hover{background:rgba(255,255,255,.12)}
+  .wa-row{display:grid;grid-template-columns:220px 1fr auto;gap:12px;margin-top:12px;align-items:start}
+  @media (max-width:760px){
+    .wa-row{grid-template-columns:1fr auto;gap:8px;margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}
+    .wa-row:first-child{border-top:0;padding-top:0}
+    .wa-name{grid-column:1;grid-row:1;font-weight:700}
+    .wa-del{grid-column:2;grid-row:1;align-self:center}
+    .wa-text{grid-column:1 / -1;grid-row:2;min-height:150px}
+  }
   .drivebox{padding:14px 16px;border:1px solid var(--line);border-radius:var(--r-m);background:var(--panel-2);margin-bottom:14px}
   .drv-ic{width:26px;height:26px;fill:none;stroke:var(--brand);stroke-width:1.6;stroke-linejoin:round;flex:none;margin-top:2px}
   .drv-list{display:flex;flex-direction:column;gap:8px;max-height:52vh;overflow:auto}
@@ -2097,9 +2105,9 @@ function renderSettings(){
 
   // WhatsApp templates
   let wa = JSON.parse(JSON.stringify(S.wa||DEFAULT_WA));
-  const drawWa=()=>{ $("#waList").innerHTML = wa.map((t,i)=>`<div style="display:grid;grid-template-columns:220px 1fr auto;gap:12px;margin-top:12px;align-items:start">
-      <input data-wn="${i}" value="${esc(t.name)}" aria-label="Message name"><textarea data-wt="${i}" rows="4" aria-label="Message text">${esc(t.text)}</textarea>
-      <button class="btn sm danger" data-wd="${i}">Remove</button></div>`).join("");
+  const drawWa=()=>{ $("#waList").innerHTML = wa.map((t,i)=>`<div class="wa-row">
+      <input class="wa-name" data-wn="${i}" value="${esc(t.name)}" aria-label="Message name"><textarea class="wa-text" data-wt="${i}" rows="4" aria-label="Message text">${esc(t.text)}</textarea>
+      <button class="btn sm danger wa-del" data-wd="${i}">Remove</button></div>`).join("");
     document.querySelectorAll("[data-wn]").forEach(el=>el.oninput=()=>wa[+el.dataset.wn].name=el.value);
     document.querySelectorAll("[data-wt]").forEach(el=>el.oninput=()=>wa[+el.dataset.wt].text=el.value);
     document.querySelectorAll("[data-wd]").forEach(el=>el.onclick=()=>{ wa.splice(+el.dataset.wd,1); drawWa(); }); };
