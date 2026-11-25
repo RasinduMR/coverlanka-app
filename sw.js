@@ -1,7 +1,7 @@
 // CoverLanka Manager — keeps the app working offline. Data sync is handled by Firebase.
-const CACHE = "coverlanka-v10-4";
+const CACHE = "coverlanka-v11";
 const SHELL = ["./","index.html","config.js","firebase-bundle.js","logo.png","logo-dark.png","icon.png","manifest.webmanifest",
-  "icons/icon-192.png","icons/icon-512.png","icons/apple-touch-icon.png",
+  "icons/icon-192.png","icons/icon-512.png","icons/badge-96.png","icons/apple-touch-icon.png",
   "fonts/outfit-latin-400-normal.woff2","fonts/outfit-latin-500-normal.woff2","fonts/outfit-latin-600-normal.woff2","fonts/outfit-latin-700-normal.woff2",
   "fonts/manrope-latin-400-normal.woff2","fonts/manrope-latin-500-normal.woff2","fonts/manrope-latin-600-normal.woff2","fonts/manrope-latin-700-normal.woff2",
   "fonts/noto-sans-sinhala-sinhala-400-normal.woff2","fonts/noto-sans-sinhala-sinhala-600-normal.woff2"];
@@ -16,4 +16,22 @@ self.addEventListener("fetch", e => {
   } else {
     e.respondWith(caches.match(e.request).then(r => r || fetch(e.request).then(res => { const c = res.clone(); caches.open(CACHE).then(ca => ca.put(e.request, c)); return res; })));
   }
+});
+
+/* ---- notifications ---- */
+self.addEventListener("push", e => {
+  let m = {};
+  try { m = e.data ? e.data.json() : {}; } catch (err) { m = { body: e.data && e.data.text() }; }
+  e.waitUntil(self.registration.showNotification(m.title || "CoverLanka", {
+    body: m.body || "", tag: m.tag || undefined, renotify: !!m.tag,
+    icon: "icons/icon-192.png", badge: "icons/badge-96.png", data: { url: m.url || "./" }
+  }));
+});
+self.addEventListener("notificationclick", e => {
+  e.notification.close();
+  const url = new URL((e.notification.data && e.notification.data.url) || "./", self.registration.scope).href;
+  e.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(list => {
+    for (const c of list) { if (c.url.startsWith(self.registration.scope) && "focus" in c) { c.postMessage({ go: "orders" }); return c.focus(); } }
+    return self.clients.openWindow(url);
+  }));
 });

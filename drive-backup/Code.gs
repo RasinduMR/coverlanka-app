@@ -1,6 +1,7 @@
 /**
  * CoverLanka — Google Drive backup service
- * Saves the app's daily backups in the "CoverLanka Backups" folder and keeps 30 days.
+ * Saves the app's daily backups in the "CoverLanka Backups" folder and keeps 30 days,
+ * and passes the app's new-order notifications on to the team's phones.
  * Only someone signed in to the CoverLanka team account can use it: every request
  * carries the app's sign-in token, which is checked against the CoverLanka database.
  */
@@ -40,6 +41,15 @@ function doPost(e) {
       const f = DriveApp.getFileById(String(req.id));
       if (!inFolder(f, folder)) return out({ ok: false, error: "That file is not a CoverLanka backup" });
       return out({ ok: true, name: f.getName(), data: f.getBlob().getDataAsString() });
+    }
+    if (req.action === "push") {
+      const allowed = /^https:\/\/(fcm\.googleapis\.com|[a-z0-9.-]*\.push\.apple\.com|updates\.push\.services\.mozilla\.com|[a-z0-9.-]*\.notify\.windows\.com)\//;
+      const msgs = (req.messages || []).slice(0, 50).filter(m => allowed.test(String(m.endpoint)));
+      const reqs = msgs.map(m => ({ url: m.endpoint, method: "post", contentType: "application/octet-stream",
+        headers: m.headers || {}, payload: Utilities.base64Decode(m.body), muteHttpExceptions: true }));
+      const res = reqs.length ? UrlFetchApp.fetchAll(reqs) : [];
+      const byId = {}; msgs.forEach((m, i) => byId[m.id] = res[i].getResponseCode());
+      return out({ ok: true, results: (req.messages || []).map(m => byId[m.id] || 400) });
     }
     return out({ ok: false, error: "Unknown action" });
   } catch (err) {

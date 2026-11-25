@@ -222,6 +222,14 @@
     .wa-del{grid-column:2;grid-row:1;align-self:center}
     .wa-text{grid-column:1 / -1;grid-row:2;min-height:150px}
   }
+  .dev-list{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+  .dev-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--line);border-radius:var(--r-m);background:var(--panel-2)}
+  .dev-item svg{width:22px;height:22px;fill:none;stroke:var(--ink-2,currentColor);stroke-width:1.6;flex:none}
+  .pill{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;background:var(--brand-soft);color:var(--brand-ink);vertical-align:1px;margin-left:4px}
+  .np-on{font-weight:700;color:var(--green,#1f9d55)}
+  .np-on::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:currentColor;margin-right:8px;vertical-align:1px}
+  .chk{display:flex;align-items:center;gap:10px;font-weight:600;cursor:pointer}
+  .chk input{width:20px;height:20px;accent-color:var(--brand);margin:0}
   .drivebox{padding:14px 16px;border:1px solid var(--line);border-radius:var(--r-m);background:var(--panel-2);margin-bottom:14px}
   .drv-ic{width:26px;height:26px;fill:none;stroke:var(--brand);stroke-width:1.6;stroke-linejoin:round;flex:none;margin-top:2px}
   .drv-list{display:flex;flex-direction:column;gap:8px;max-height:52vh;overflow:auto}
@@ -556,13 +564,13 @@ let DB;
    Every list is a Firestore collection (one document per item), so 4 phones can
    add and change things at the same time without overwriting each other.
    Settings that belong to one phone only (theme, PIN) stay on that phone. */
-const COLS = ["orders","products","restocks","expenses","partners","quotes","trash"];
+const COLS = ["orders","products","restocks","expenses","partners","quotes","trash","devices"];
 const LOCAL_SETTING_KEYS = ["theme","pinHash","pinSalt","recoveryHash","backupFolder","lastExtraBackup","lastExtraBackupDay"];
 const CLOUD = { app:null, auth:null, db:null, user:null, ready:false, unsub:[], last:{}, lastSettings:"", pending:0, online:navigator.onLine };
 function localSettings(){ try{ return JSON.parse(localStorage.getItem("coverlanka_local")||"{}"); }catch(e){ return {}; } }
 function saveLocalSettings(){ const o={}; LOCAL_SETTING_KEYS.forEach(k=>{ if(DB.settings[k]!=null) o[k]=DB.settings[k]; }); try{ localStorage.setItem("coverlanka_local", JSON.stringify(o)); }catch(e){} }
 function sharedSettings(){ const s={...DB.settings}; LOCAL_SETTING_KEYS.forEach(k=>delete s[k]); return { settings:s, lastSummary:DB.lastSummary||null, startupLoaded:!!DB.startupLoaded, version:DB.version||1 }; }
-function emptyDB(){ return { version:2, settings:{}, products:[], restocks:[], orders:[], expenses:[], partners:[], quotes:[], trash:[], startupLoaded:true }; }
+function emptyDB(){ return { version:2, settings:{}, products:[], restocks:[], orders:[], expenses:[], partners:[], quotes:[], trash:[], devices:[], startupLoaded:true }; }
 
 function setSyncState(){
   const st = !CLOUD.online ? "off" : (CLOUD.pending>0 ? "busy" : "ok");
@@ -687,8 +695,9 @@ function showFirstRun(){
 function uploadAll(d){
   const keepLocal={}; LOCAL_SETTING_KEYS.forEach(k=>{ if(DB.settings[k]!=null) keepLocal[k]=DB.settings[k]; });
   ["lastDriveBackup","lastDriveBackupDay"].forEach(k=>{ if(DB.settings[k]!=null) keepLocal[k]=DB.settings[k]; });   // a restore must not undo "already backed up today"
+  const keepDevices=DB.devices||[];
   d=migrate(d);
-  DB={...emptyDB(), ...d}; COLS.forEach(c=>{ DB[c]=DB[c]||[]; });
+  DB={...emptyDB(), ...d}; DB.devices=keepDevices; COLS.forEach(c=>{ DB[c]=DB[c]||[]; });
   DB.settings={...DB.settings, ...keepLocal};
   COLS.forEach(c=>{ if(!CLOUD.last[c]) CLOUD.last[c]=new Map(); }); CLOUD.lastSettings="";
   saveDB();   // the "last" maps know what is online now, so anything not in the backup gets removed for everyone
@@ -719,6 +728,7 @@ async function boot(){
     migrate(DB);
     if(JSON.stringify(sharedSettings())!==before || DB.products.some(p=>p.weightKg==null)) saveDB();
     $("#boot").classList.remove("on");
+    if(location.hash==="#orders"){ page="orders"; history.replaceState(null,"",location.pathname); }
     purgeTrash();
     render();
     if(DB.settings.pinHash) showLock();
@@ -732,7 +742,7 @@ async function boot(){
 function driveUrl(){ return (window.CL_CONFIG&&CL_CONFIG.driveBackupUrl)||""; }
 function backupData(){
   const c=JSON.parse(JSON.stringify(DB)); c.settings=c.settings||{};
-  c.settings.claudeKey=""; LOCAL_SETTING_KEYS.forEach(k=>delete c.settings[k]);
+  c.settings.claudeKey=""; LOCAL_SETTING_KEYS.forEach(k=>delete c.settings[k]); delete c.devices;
   c.backupAt=new Date().toISOString(); return c;
 }
 async function driveCall(body){
@@ -794,6 +804,121 @@ async function openDriveRestore(){
       }catch(e){ b.disabled=false; b.textContent="Restore"; alert("Could not restore: "+e.message); }
     });
   }catch(e){ if($("#dr_list")) $("#dr_list").innerHTML=`<div class="alert" style="margin:0">${esc(e.message)}</div>`; }
+}
+
+/* ================= NOTIFICATIONS =================
+   Standard Web Push (works on Android, iPhone home-screen app, and laptops), free.
+   Each phone that turns notifications on is saved in the "devices" list.
+   When an order is added, the phone that added it encrypts a short message for every
+   other phone and the team's Google Apps Script passes it to Google / Apple / Mozilla. */
+const b64u = {
+  enc(buf){ const b=new Uint8Array(buf); let s=""; for(const x of b) s+=String.fromCharCode(x); return btoa(s).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,""); },
+  std(buf){ const b=new Uint8Array(buf); let s=""; for(const x of b) s+=String.fromCharCode(x); return btoa(s); },
+  dec(str){ str=String(str).replace(/-/g,"+").replace(/_/g,"/"); while(str.length%4) str+="="; const s=atob(str); const b=new Uint8Array(s.length); for(let i=0;i<s.length;i++) b[i]=s.charCodeAt(i); return b; }
+};
+const _te=new TextEncoder();
+function _cat(...arrs){ const n=arrs.reduce((a,x)=>a+x.length,0), o=new Uint8Array(n); let p=0; arrs.forEach(x=>{ o.set(x,p); p+=x.length; }); return o; }
+async function _hmac(key, data){ const k=await crypto.subtle.importKey("raw", key, {name:"HMAC",hash:"SHA-256"}, false, ["sign"]); return new Uint8Array(await crypto.subtle.sign("HMAC", k, data)); }
+
+/* The team's VAPID key pair: made once by the first phone, kept in the protected database. */
+async function getVapid(){
+  if(CLOUD.vapid) return CLOUD.vapid;
+  const F=window.FB, ref=F.doc(CLOUD.db,"meta","push");
+  const v=await F.runTransaction(CLOUD.db, async t=>{
+    const s=await t.get(ref);
+    if(s.exists() && s.data().publicKey) return s.data();
+    const kp=await crypto.subtle.generateKey({name:"ECDSA",namedCurve:"P-256"}, true, ["sign","verify"]);
+    const pub=b64u.enc(await crypto.subtle.exportKey("raw", kp.publicKey));
+    const jwk=await crypto.subtle.exportKey("jwk", kp.privateKey);
+    const d={ publicKey:pub, privateJwk:JSON.stringify(jwk), created:new Date().toISOString() };
+    t.set(ref, d); return d;
+  });
+  CLOUD.vapid=v; return v;
+}
+async function vapidHeader(endpoint, v){
+  const aud=new URL(endpoint).origin;
+  const head=b64u.enc(_te.encode(JSON.stringify({typ:"JWT",alg:"ES256"})));
+  const body=b64u.enc(_te.encode(JSON.stringify({aud, exp:Math.floor(Date.now()/1000)+12*3600, sub:"mailto:"+((window.CL_CONFIG&&CL_CONFIG.teamEmail)||"team@coverlanka.lk")})));
+  const key=await crypto.subtle.importKey("jwk", JSON.parse(v.privateJwk), {name:"ECDSA",namedCurve:"P-256"}, false, ["sign"]);
+  const sig=await crypto.subtle.sign({name:"ECDSA",hash:"SHA-256"}, key, _te.encode(head+"."+body));
+  return "vapid t="+head+"."+body+"."+b64u.enc(sig)+", k="+v.publicKey;
+}
+/* RFC 8291 message encryption (aes128gcm) */
+async function encryptPush(sub, text){
+  const uaPub=b64u.dec(sub.p256dh), auth=b64u.dec(sub.auth);
+  const eph=await crypto.subtle.generateKey({name:"ECDH",namedCurve:"P-256"}, true, ["deriveBits"]);
+  const asPub=new Uint8Array(await crypto.subtle.exportKey("raw", eph.publicKey));
+  const uaKey=await crypto.subtle.importKey("raw", uaPub, {name:"ECDH",namedCurve:"P-256"}, false, []);
+  const shared=new Uint8Array(await crypto.subtle.deriveBits({name:"ECDH",public:uaKey}, eph.privateKey, 256));
+  const prkKey=await _hmac(auth, shared);
+  const ikm=await _hmac(prkKey, _cat(_te.encode("WebPush: info\0"), uaPub, asPub, new Uint8Array([1])));
+  const salt=crypto.getRandomValues(new Uint8Array(16));
+  const prk=await _hmac(salt, ikm);
+  const cek=(await _hmac(prk, _cat(_te.encode("Content-Encoding: aes128gcm\0"), new Uint8Array([1])))).slice(0,16);
+  const nonce=(await _hmac(prk, _cat(_te.encode("Content-Encoding: nonce\0"), new Uint8Array([1])))).slice(0,12);
+  const key=await crypto.subtle.importKey("raw", cek, {name:"AES-GCM"}, false, ["encrypt"]);
+  const ct=new Uint8Array(await crypto.subtle.encrypt({name:"AES-GCM",iv:nonce}, key, _cat(_te.encode(text), new Uint8Array([2]))));
+  const hdr=new Uint8Array(21); hdr.set(salt,0); new DataView(hdr.buffer).setUint32(16,4096); hdr[20]=65;
+  return _cat(hdr, asPub, ct);
+}
+function pushSupported(){ return "serviceWorker" in navigator && "PushManager" in window && "Notification" in window && window.isSecureContext; }
+function isIOS(){ return /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1); }
+function isStandalone(){ return window.matchMedia("(display-mode: standalone)").matches || navigator.standalone===true; }
+function deviceName(){
+  const ua=navigator.userAgent;
+  if(/iPhone/.test(ua)) return "iPhone"; if(/iPad/.test(ua)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1)) return "iPad";
+  if(/Android/.test(ua)){ const m=ua.match(/Android[^;]*;\s*([^;)]+?)(?:\sBuild|\))/); return m&&m[1]&&!/^K$|wv/.test(m[1])?m[1].trim():"Android phone"; }
+  if(/Windows/.test(ua)) return "Windows laptop"; if(/Mac/.test(ua)) return "Mac"; return "This device";
+}
+function myDeviceId(){ return localStorage.getItem("coverlanka_device")||""; }
+async function currentSubscription(){
+  if(!pushSupported()) return null;
+  const reg=await navigator.serviceWorker.getRegistration(); if(!reg) return null;
+  return reg.pushManager.getSubscription();
+}
+async function enableNotifications(name){
+  if(!pushSupported()) throw new Error(isIOS()&&!isStandalone() ? "On iPhone, first add the app to the Home Screen (Share → Add to Home Screen), open it from there, then turn notifications on." : "This browser can't show notifications.");
+  const perm=await Notification.requestPermission();
+  if(perm!=="granted") throw new Error("Notifications are blocked. Allow them for this app in the phone's settings, then try again.");
+  const reg=await navigator.serviceWorker.ready;
+  const v=await getVapid();
+  let sub=await reg.pushManager.getSubscription();
+  if(sub){ const k=sub.options&&sub.options.applicationServerKey; if(k && b64u.enc(k)!==v.publicKey){ await sub.unsubscribe(); sub=null; } }
+  if(!sub) sub=await reg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey:b64u.dec(v.publicKey) });
+  const j=sub.toJSON();
+  let id=myDeviceId(); const existing=(DB.devices||[]).find(d=>d.endpoint===j.endpoint);
+  if(existing) id=existing.id; if(!id) id=uid();
+  localStorage.setItem("coverlanka_device", id);
+  const dev={ id, name:(name||deviceName()).slice(0,40), endpoint:j.endpoint, p256dh:j.keys.p256dh, auth:j.keys.auth, added:new Date().toISOString() };
+  DB.devices=(DB.devices||[]).filter(d=>d.id!==id && d.endpoint!==j.endpoint); DB.devices.push(dev); saveDB();
+  return dev;
+}
+async function disableNotifications(){
+  const sub=await currentSubscription(); const ep=sub&&sub.endpoint;
+  if(sub) await sub.unsubscribe().catch(()=>{});
+  const id=myDeviceId();
+  DB.devices=(DB.devices||[]).filter(d=>d.id!==id && d.endpoint!==ep); saveDB();
+}
+/* send to every device (except this one unless includeSelf) */
+async function sendPush(msg, includeSelf){
+  if(!driveUrl()) throw new Error("The backup/notification service is not set up");
+  const me=myDeviceId(), targets=(DB.devices||[]).filter(d=>includeSelf || d.id!==me);
+  if(!targets.length) return {sent:0};
+  const v=await getVapid(); const text=JSON.stringify(msg);
+  const messages=await Promise.all(targets.map(async d=>({ id:d.id, endpoint:d.endpoint, body:b64u.std(await encryptPush(d,text)),
+    headers:{ "Authorization":await vapidHeader(d.endpoint,v), "Content-Encoding":"aes128gcm", "TTL":"86400", "Urgency":"high" } })));
+  const r=await driveCall({ action:"push", messages });
+  const gone=[]; (r.results||[]).forEach((code,i)=>{ if(code===404||code===410) gone.push(messages[i].id); });
+  if(gone.length){ DB.devices=(DB.devices||[]).filter(d=>!gone.includes(d.id)); saveDB(); }
+  const ok=(r.results||[]).filter(c=>c>=200&&c<300).length;
+  return { sent:ok, failed:(r.results||[]).length-ok, results:r.results };
+}
+function notifyNewOrder(o){
+  if(DB.settings.notifyNewOrders===false || !(DB.devices||[]).length) return;
+  const c=orderCalc(o), p=product(o.productId);
+  const place=[o.city,o.district].filter(Boolean)[0]||"";
+  sendPush({ title:"New order "+orderNo(o), body:[o.customer, c.qty+" × "+(p?p.name:"raincoat"), money(c.total), place].filter(Boolean).join(" · "), tag:"order-"+o.id, url:"./#orders" })
+    .catch(e=>console.warn("Notification:", e.message));
 }
 
 async function signOutTeam(){ if(!confirm("Sign out of CoverLanka on this device?")) return; await window.FB.signOut(CLOUD.auth); }
@@ -1265,6 +1390,7 @@ function openOrder(id, prefill, imageFile, onSaved){
       DB.orders.push(nord);
       if(onSaved) onSaved(nord);
       toast("Order CL-"+String(no).padStart(4,"0")+" added");
+      setTimeout(()=>notifyNewOrder(nord), 300);
     }
     saveDB(); closeModal(); render();
   };
@@ -2044,6 +2170,13 @@ function renderSettings(){
       <div id="pin_msg"></div>
     </div>
 
+    <div class="panel" id="notifPanel"><h3>Notifications</h3>
+      <p class="hint" style="margin-top:0">Get a notification on this phone or laptop every time someone in the team adds an order.</p>
+      <div id="np_state" class="muted"><span class="spin"></span>Checking…</div>
+      ${(DB.devices||[]).length?`<div class="dev-list">${DB.devices.map(d=>`<div class="dev-item"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M10.5 18.5h3"/></svg><div style="flex:1;min-width:0"><div style="font-weight:700">${esc(d.name)}${d.id===myDeviceId()?' <span class="pill">This device</span>':""}</div><div class="hint" style="margin:0">Since ${esc(niceTime(d.added))}</div></div><button class="btn sm" data-devx="${d.id}" aria-label="Stop notifications on ${esc(d.name)}">Remove</button></div>`).join("")}</div>`:""}
+      <label class="chk" style="margin-top:12px"><input type="checkbox" id="np_orders" ${S.notifyNewOrders===false?"":"checked"}> Notify the team about new orders</label>
+    </div>
+
     <div class="panel"><h3>Backup</h3>
       <div class="drivebox">
         <div class="row" style="align-items:flex-start"><svg class="drv-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3h8l6 10-4 7H6l-4-7z"/><path d="M8 3l6 10h8M2 13h12l-4 7"/></svg>
@@ -2129,6 +2262,27 @@ function renderSettings(){
   if($("#pin_off")) $("#pin_off").onclick=()=>{ if(confirm("Turn off the PIN? Anyone using this laptop will be able to open the app.")){ delete S.pinHash; delete S.recoveryHash; saveDB(); toast("PIN turned off"); render(); } };
   if($("#pin_change")) $("#pin_change").onclick=()=>{ delete S.pinHash; delete S.recoveryHash; saveDB(); render(); setTimeout(()=>$("#pin1")&&$("#pin1").focus(),50); };
 
+  // Notifications
+  (async()=>{
+    const box=$("#np_state"); if(!box) return;
+    const sub=await currentSubscription().catch(()=>null);
+    const on = !!sub && (DB.devices||[]).some(d=>d.endpoint===sub.endpoint);
+    if(!$("#np_state")) return;
+    if(!pushSupported()) box.innerHTML = isIOS()&&!isStandalone()
+      ? `<div class="alert" style="margin:0"><b>First add the app to the Home Screen.</b> In Safari press <b>Share</b> → <b>Add to Home Screen</b>, open CoverLanka from the Home Screen, and come back here.</div>`
+      : `<div class="alert" style="margin:0">This browser can't show notifications.</div>`;
+    else if(on) box.innerHTML=`<div class="row"><span class="np-on">On for this device</span><div class="spacer"></div><button class="btn" id="np_test">Send a test</button><button class="btn danger" id="np_off">Turn off</button></div>`;
+    else box.innerHTML=`<div class="row"><span class="muted" style="font-weight:600">Off on this device</span><div class="spacer"></div><button class="btn primary" id="np_on">Turn on notifications</button></div>`;
+    if($("#np_on")) $("#np_on").onclick=async()=>{ const b=$("#np_on"); b.disabled=true; b.innerHTML='<span class="spin"></span>Turning on…';
+      try{ await enableNotifications(); toast("Notifications are on for this device"); render(); }catch(e){ b.disabled=false; b.textContent="Turn on notifications"; alert(e.message); } };
+    if($("#np_off")) $("#np_off").onclick=async()=>{ await disableNotifications(); toast("Notifications turned off"); render(); };
+    if($("#np_test")) $("#np_test").onclick=async()=>{ const b=$("#np_test"); b.disabled=true; b.innerHTML='<span class="spin"></span>Sending…';
+      try{ const r=await sendPush({title:"CoverLanka test", body:"Notifications are working 🎉", tag:"test", url:"./"}, true); toast(r.sent?("Sent to "+r.sent+" device"+(r.sent>1?"s":"")):"Could not reach the devices"); }
+      catch(e){ alert("Could not send: "+e.message); } b.disabled=false; b.textContent="Send a test"; };
+  })();
+  document.querySelectorAll("[data-devx]").forEach(b=>b.onclick=async()=>{ const d=DB.devices.find(x=>x.id===b.dataset.devx); if(!d||!confirm("Stop notifications on "+d.name+"?")) return;
+    if(d.id===myDeviceId()) await disableNotifications(); else { DB.devices=DB.devices.filter(x=>x.id!==d.id); saveDB(); } render(); });
+  $("#np_orders").onchange=e=>{ S.notifyNewOrders=e.target.checked; saveDB(); toast(e.target.checked?"New-order notifications on":"New-order notifications off"); };
   // Google Drive backup
   if($("#dr_now")) $("#dr_now").onclick=async ()=>{ const b=$("#dr_now"); b.disabled=true; b.innerHTML='<span class="spin"></span>Backing up…';
     try{ await driveBackup("manual"); toast("Backed up to Google Drive"); }catch(e){ alert("Backup failed: "+e.message); } render(); };
@@ -2138,7 +2292,7 @@ function renderSettings(){
   document.querySelectorAll("[data-trx]").forEach(b=>b.onclick=()=>{ const t=DB.trash.find(x=>x.id===b.dataset.trx); if(t&&confirm("Delete “"+t.label+"” forever? This cannot be undone.")){ DB.trash=DB.trash.filter(x=>x.id!==t.id); saveDB(); render(); } });
   if($("#tr_empty")) $("#tr_empty").onclick=()=>{ if(confirm("Delete everything in the Trash forever? This cannot be undone.")){ DB.trash=[]; saveDB(); toast("Trash emptied"); render(); } };
 
-  $("#b_exp").onclick=()=>{ const copy=JSON.parse(JSON.stringify(DB)); copy.settings.claudeKey=""; download("coverlanka-backup-"+today()+".json", JSON.stringify(copy,null,1), "application/json"); };
+  $("#b_exp").onclick=()=>{ const copy=JSON.parse(JSON.stringify(DB)); copy.settings.claudeKey=""; delete copy.devices; download("coverlanka-backup-"+today()+".json", JSON.stringify(copy,null,1), "application/json"); };
   $("#b_imp").onclick=()=>$("#b_file").click();
   $("#b_file").onchange=e=>{
     const f=e.target.files[0]; if(!f) return;
@@ -2176,6 +2330,7 @@ function exportCustomersCSV(){
 /* ================= START ================= */
 boot();
 if("serviceWorker" in navigator && location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
+if("serviceWorker" in navigator) navigator.serviceWorker.addEventListener("message", e=>{ if(e.data&&e.data.go==="orders"&&DB){ closeModal(); page="orders"; render(); } });
 </script>
 </body>
 </html>
