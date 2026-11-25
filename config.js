@@ -2,6 +2,7 @@
 // the data is protected by the Firestore rules, which only let the team login in).
 window.CL_CONFIG = {
   teamEmail: "coverlankastore@gmail.com",
+  driveBackupUrl: "https://script.google.com/macros/s/AKfycbzJKPEunPwBI4QvB7iD7hBFyBodA-uk0FTw9CofQV7wH7u_jhiVSgaNVHLel3U0pCT8/exec",
   firebase: {
     apiKey: "AIzaSyAdMgIof5UeelcxG-l8p0DzRgn23ujNR1I",
     authDomain: "coverlanka-manager.firebaseapp.com",
