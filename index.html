@@ -1,0 +1,2038 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#fe5f03">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="CoverLanka">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<title>CoverLanka Manager</title>
+<script>try{var t=localStorage.getItem("coverlanka_theme");if(t)document.documentElement.setAttribute("data-theme",t);}catch(e){}</script>
+<style>
+  @font-face{font-family:"Outfit";src:url("fonts/outfit-latin-400-normal.woff2") format("woff2");font-weight:400;font-display:swap}
+  @font-face{font-family:"Outfit";src:url("fonts/outfit-latin-500-normal.woff2") format("woff2");font-weight:500;font-display:swap}
+  @font-face{font-family:"Outfit";src:url("fonts/outfit-latin-600-normal.woff2") format("woff2");font-weight:600;font-display:swap}
+  @font-face{font-family:"Outfit";src:url("fonts/outfit-latin-700-normal.woff2") format("woff2");font-weight:700;font-display:swap}
+  @font-face{font-family:"Manrope";src:url("fonts/manrope-latin-400-normal.woff2") format("woff2");font-weight:400;font-display:swap}
+  @font-face{font-family:"Manrope";src:url("fonts/manrope-latin-500-normal.woff2") format("woff2");font-weight:500;font-display:swap}
+  @font-face{font-family:"Manrope";src:url("fonts/manrope-latin-600-normal.woff2") format("woff2");font-weight:600;font-display:swap}
+  @font-face{font-family:"Manrope";src:url("fonts/manrope-latin-700-normal.woff2") format("woff2");font-weight:700;font-display:swap}
+  @font-face{font-family:"Sinhala";src:url("fonts/noto-sans-sinhala-sinhala-400-normal.woff2") format("woff2");font-weight:400;unicode-range:U+0D80-0DFF,U+200C-200D}
+  @font-face{font-family:"Sinhala";src:url("fonts/noto-sans-sinhala-sinhala-600-normal.woff2") format("woff2");font-weight:600 700;unicode-range:U+0D80-0DFF,U+200C-200D}
+
+  :root{
+    --bg:#f3f4f6; --panel:#ffffff; --panel-2:#f8f9fa; --ink:#15171a; --ink-2:#3b4048; --muted:#6b717b; --line:#e3e6ea; --line-2:#d5d9df;
+    --brand:#fe5f03; --brand-ink:#c94a00; --brand-soft:#fff1e8; --brand-line:#ffd2b5; --on-brand:#ffffff;
+    --green:#17804a; --green-soft:#e4f4ea; --red:#c23a2f; --red-soft:#fbe8e6; --amber:#a8690c; --amber-soft:#fdf2dc;
+    --blue:#1f62b0; --blue-soft:#e7eef9; --gray-soft:#eef0f2; --overlay:rgba(15,17,20,.48);
+    --shadow-1:0 1px 2px rgba(16,20,26,.05); --shadow-2:0 18px 50px -12px rgba(16,20,26,.28);
+    --hero:#15171a; --hero-ink:#f3f4f6; --hero-muted:#9aa1aa; --track:#2b3036;
+    --r-s:6px; --r-m:10px; --r-l:16px;
+    --ease:cubic-bezier(.2,.8,.2,1);
+    color-scheme:light;
+  }
+  html[data-theme="dark"]{
+    --bg:#0f1113; --panel:#171a1d; --panel-2:#1c2024; --ink:#eceef0; --ink-2:#c5cad1; --muted:#949ba5; --line:#262b30; --line-2:#323840;
+    --brand:#ff7124; --brand-ink:#ff9a5c; --brand-soft:#2a1a10; --brand-line:#5a3218; --on-brand:#111;
+    --green:#4cc283; --green-soft:#12271b; --red:#ff7b6e; --red-soft:#2c1614; --amber:#e6b04f; --amber-soft:#2a2010;
+    --blue:#7fb0f0; --blue-soft:#14202f; --gray-soft:#22262b; --overlay:rgba(0,0,0,.6);
+    --shadow-1:0 1px 0 rgba(255,255,255,.02); --shadow-2:0 24px 60px -12px rgba(0,0,0,.7);
+    --hero:#1b1f23; --hero-ink:#f3f4f6; --hero-muted:#959ca6; --track:#2c3238;
+    color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{font-family:"Manrope","Sinhala","Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;font-feature-settings:"tnum" 1}
+  body.theming, body.theming *{transition:background-color .35s var(--ease),border-color .35s var(--ease),color .35s var(--ease)!important}
+  h1,h2,h3,.v,.hero-num,.display{font-family:"Outfit","Sinhala","Segoe UI",sans-serif}
+  ::selection{background:var(--brand);color:#fff}
+  :focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+  .app{display:flex;min-height:100vh}
+
+  /* ---------- sidebar ---------- */
+  nav{width:232px;background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;position:fixed;top:0;bottom:0;left:0;z-index:10}
+  .brand{padding:24px 22px 18px}
+  .brand img{width:100%;display:block}
+  .logo-dark{display:none!important}
+  html[data-theme="dark"] .logo-light{display:none!important}
+  html[data-theme="dark"] .logo-dark{display:block!important}
+  .brand small{display:block;font-size:12px;color:var(--muted);margin-top:8px;text-align:center}
+  .navlist{padding:6px 12px;display:flex;flex-direction:column;gap:2px}
+  .navlist button{all:unset;cursor:pointer;padding:10px 12px;border-radius:9px;display:flex;gap:11px;align-items:center;font-size:14px;font-weight:500;color:var(--ink-2);position:relative;transition:background .18s var(--ease),color .18s var(--ease)}
+  .navlist button svg{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;opacity:.85}
+  .navlist button:hover{background:var(--gray-soft);color:var(--ink)}
+  .navlist button.active{background:var(--brand-soft);color:var(--brand-ink);font-weight:700}
+  .navlist button.active::before{content:"";position:absolute;left:-12px;top:8px;bottom:8px;width:3px;border-radius:0 3px 3px 0;background:var(--brand)}
+  .navlist button.active svg{opacity:1}
+  .navlist button:focus-visible{outline:2px solid var(--brand);outline-offset:-2px}
+  .navfoot{margin-top:auto;padding:14px 16px 16px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
+  .navfoot .tip{font-size:12px;color:var(--muted);line-height:1.5}
+  .navfoot .tip kbd{font-family:inherit;font-size:11px;font-weight:700;background:var(--gray-soft);border:1px solid var(--line-2);border-bottom-width:2px;border-radius:5px;padding:1px 5px;color:var(--ink)}
+  .navfoot .tools{display:flex;gap:6px}
+  .iconbtn{all:unset;cursor:pointer;flex:1;display:flex;align-items:center;justify-content:center;gap:7px;height:34px;border-radius:9px;border:1px solid var(--line);font-size:12px;font-weight:600;color:var(--ink-2);transition:background .18s var(--ease)}
+  .iconbtn:hover{background:var(--gray-soft)}
+  .iconbtn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+  main{margin-left:232px;flex:1;padding:30px 36px 48px;max-width:1440px;min-width:0}
+  .page{animation:pagein .28s var(--ease)}
+  @keyframes pagein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  h1{font-size:26px;font-weight:600;letter-spacing:-.3px;margin:0 0 4px}
+  .sub{color:var(--muted);margin:0 0 22px;font-size:14px}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .spacer{flex:1}
+  .section-title{font-family:"Outfit",sans-serif;font-size:17px;font-weight:600;color:var(--ink);margin:30px 0 0}
+  .section-title span{font-weight:400;color:var(--muted);font-size:14px;margin-left:6px}
+
+  /* ---------- hero (business value gauge) ---------- */
+  .hero{background:var(--hero);color:var(--hero-ink);border-radius:var(--r-l);padding:26px 30px;display:grid;grid-template-columns:1.2fr 1fr;gap:24px;align-items:center;margin:18px 0 6px;position:relative;overflow:hidden}
+  .hero .lbl{color:var(--hero-muted);font-size:14px}
+  .hero-num{font-size:44px;font-weight:600;letter-spacing:-1px;line-height:1.1;margin:6px 0 4px}
+  .hero .meta{display:flex;gap:28px;margin-top:18px;flex-wrap:wrap}
+  .hero .meta div{font-size:13px;color:var(--hero-muted)}
+  .hero .meta b{display:block;font-family:"Outfit",sans-serif;font-size:18px;font-weight:600;color:var(--hero-ink);margin-top:2px}
+  .hero .note{margin-top:16px;font-size:13px;color:var(--hero-muted)}
+  .hero .note b{color:var(--hero-ink)}
+  .gauge{position:relative;justify-self:end;width:100%;max-width:400px}
+  .gauge svg{width:100%;display:block;overflow:visible}
+  .gauge .track{stroke:var(--track)}
+  .gauge .fill{stroke:var(--brand);stroke-linecap:round;transition:stroke-dashoffset 1.4s var(--ease)}
+  .gauge .pct{position:absolute;left:0;right:0;bottom:8%;text-align:center}
+  .gauge .pct b{font-family:"Outfit",sans-serif;font-size:40px;font-weight:600;display:block;line-height:1}
+  .gauge .pct span{font-size:12px;color:var(--hero-muted)}
+
+  /* ---------- stats ---------- */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r-m);overflow:hidden;margin:14px 0 22px}
+  @media (max-width:1150px){.stats{grid-template-columns:repeat(2,1fr)}}
+  .stat{background:var(--panel);padding:16px 18px}
+  .stat .k{color:var(--muted);font-size:13px}
+  .stat .v{font-size:25px;font-weight:600;letter-spacing:-.3px;margin-top:4px}
+  .stat .s{font-size:12px;color:var(--muted);margin-top:2px}
+  .stat.pos .v{color:var(--green)} .stat.neg .v{color:var(--red)}
+  .stat.accent{box-shadow:inset 3px 0 0 var(--brand)}
+
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r-m);overflow:hidden;margin:6px 0 20px}
+  .card{background:var(--panel);padding:16px 18px}
+  .card .k{color:var(--muted);font-size:13px}
+  .card .v{font-family:"Outfit",sans-serif;font-size:24px;font-weight:600;margin-top:4px}
+  .card .s{font-size:12px;color:var(--muted);margin-top:2px}
+  .card.or{box-shadow:inset 3px 0 0 var(--brand)}
+  .pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-m);padding:20px;margin-bottom:18px;box-shadow:var(--shadow-1)}
+  .panel h3{margin:0 0 14px;font-size:16px;font-weight:600}
+  .panel h3 .muted{font-weight:400;font-family:"Manrope",sans-serif;font-size:13px}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .two-1{display:grid;grid-template-columns:2fr 1fr;gap:18px}
+  @media (max-width:1150px){.two,.two-1{grid-template-columns:1fr}}
+
+  table{width:100%;border-collapse:collapse}
+  th{text-align:left;font-size:12px;color:var(--muted);font-weight:600;padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+  td{padding:11px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+  tbody tr{transition:background .15s var(--ease)}
+  tbody tr:hover{background:var(--panel-2)}
+  tr:last-child td{border-bottom:none}
+  td.num,th.num{text-align:right;white-space:nowrap}
+  .tablewrap{overflow-x:auto;margin:0 -4px;padding:0 4px}
+  .empty{color:var(--muted);text-align:center;padding:34px 10px}
+  .empty b{display:block;color:var(--ink);font-size:15px;margin-bottom:4px}
+
+  /* ---------- controls ---------- */
+  button.btn{border:1px solid var(--line-2);background:var(--panel);color:var(--ink);padding:9px 15px;border-radius:9px;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;transition:background .18s var(--ease),border-color .18s var(--ease),transform .12s var(--ease)}
+  button.btn:hover{background:var(--gray-soft)}
+  button.btn:active{transform:translateY(1px)}
+  button.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+  html[data-theme="dark"] button.primary{color:#111}
+  button.primary:hover{background:var(--brand);filter:brightness(1.07)}
+  button.danger{color:var(--red)}
+  button.sm{padding:5px 10px;font-size:12px;border-radius:7px}
+  button:disabled{opacity:.5;cursor:default}
+  .wa{color:#13a150!important}
+  button.btn svg{width:15px;height:15px;vertical-align:-3px;margin-right:6px;fill:currentColor}
+  button.more{padding:5px 8px;line-height:0}
+  button.more svg{margin:0}
+  .cell1{font-weight:600;white-space:nowrap}
+  .cell2{font-size:12px;color:var(--muted);margin-top:2px;white-space:nowrap}
+  button.more svg{width:16px;height:16px;fill:currentColor}
+  .menu hr{border:none;border-top:1px solid var(--line);margin:5px 4px}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 0}
+  .chips button{all:unset;cursor:pointer;font-size:12px;font-weight:600;padding:4px 10px;border-radius:20px;background:var(--gray-soft);color:var(--ink-2)}
+  .chips button:hover{background:var(--brand-soft);color:var(--brand-ink)}
+  .wa-preview{white-space:pre-wrap;background:#dcf8c6;color:#111;border-radius:10px 10px 2px 10px;padding:10px 12px;font-size:13.5px;line-height:1.5;max-width:420px;margin-left:auto;box-shadow:0 1px 1px rgba(0,0,0,.08)}
+  html[data-theme="dark"] .wa-preview{background:#005c4b;color:#e9edef}
+  html[data-theme="dark"] .wa{color:#3ddc84!important}
+  .wa svg{width:13px;height:13px;vertical-align:-2px;margin-right:4px;fill:currentColor}
+  input,select,textarea{font-family:inherit;font-size:14px;padding:9px 11px;border:1px solid var(--line-2);border-radius:9px;background:var(--panel);color:var(--ink);width:100%;transition:border-color .18s var(--ease),box-shadow .18s var(--ease)}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
+  input.filled,textarea.filled,select.filled{background:var(--brand-soft);border-color:var(--brand)}
+  input[type="month"],input[type="date"]{font-feature-settings:"tnum" 1}
+  label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:600}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px 16px}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px 16px}
+  .full{grid-column:1/-1}
+  .seg{display:inline-flex;background:var(--gray-soft);border-radius:10px;padding:3px;gap:2px}
+  .seg button{all:unset;cursor:pointer;padding:6px 12px;border-radius:8px;font-size:13px;font-weight:600;color:var(--muted)}
+  .seg button.on{background:var(--panel);color:var(--ink);box-shadow:var(--shadow-1)}
+
+  .s-New{background:var(--gray-soft);color:var(--ink-2)}
+  .s-Confirmed{background:var(--blue-soft);color:var(--blue)}
+  .s-Dispatched{background:var(--amber-soft);color:var(--amber)}
+  .s-Delivered{background:var(--green-soft);color:var(--green)}
+  .s-Returned{background:var(--red-soft);color:var(--red)}
+  .s-Cancelled{background:var(--gray-soft);color:var(--muted)}
+  .q-Draft{background:var(--gray-soft);color:var(--ink-2)}
+  .q-Sent{background:var(--blue-soft);color:var(--blue)}
+  .q-Accepted{background:var(--green-soft);color:var(--green)}
+  .q-Declined{background:var(--red-soft);color:var(--red)}
+  .q-Expired{background:var(--amber-soft);color:var(--amber)}
+  select.status{width:auto;padding:5px 26px 5px 11px;font-size:12px;font-weight:700;border-radius:20px;border:none;cursor:pointer}
+  .ok{color:var(--green);font-weight:700}.low{color:var(--amber);font-weight:700}.out{color:var(--red);font-weight:700}
+  .alert{background:var(--amber-soft);color:var(--amber);padding:11px 14px;border-radius:var(--r-m);margin-bottom:10px;font-weight:500}
+  .alert.red{background:var(--red-soft);color:var(--red)}
+  .alert b{font-weight:700}
+
+  /* ---------- modal, menu, toast ---------- */
+  .modal-bg{position:fixed;inset:0;background:var(--overlay);display:flex;align-items:flex-start;justify-content:center;padding:34px 20px;overflow:auto;z-index:50;opacity:0;visibility:hidden;transition:opacity .22s var(--ease),visibility 0s .22s;backdrop-filter:blur(3px)}
+  .modal-bg.open{opacity:1;visibility:visible;transition:opacity .22s var(--ease)}
+  .modal{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-l);width:100%;max-width:780px;padding:26px 28px;box-shadow:var(--shadow-2);transform:translateY(12px) scale(.985);transition:transform .28s var(--ease)}
+  .modal-bg.open .modal{transform:none}
+  .modal h2{margin:0 0 16px;font-size:20px;font-weight:600}
+  .modal .actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
+  .totalbox{background:var(--panel-2);border:1px solid var(--line);border-radius:var(--r-m);padding:13px 16px;display:flex;gap:26px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+  .totalbox b{font-family:"Outfit",sans-serif;font-size:18px;color:var(--ink);font-weight:600}
+  .muted{color:var(--muted)}
+  .menu{position:fixed;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow-2);z-index:60;min-width:250px;padding:6px;animation:menuin .16s var(--ease)}
+  @keyframes menuin{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+  .menu .mh{font-size:12px;color:var(--muted);padding:7px 11px 5px}
+  .menu button{all:unset;display:block;padding:9px 11px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;width:100%;box-sizing:border-box;color:var(--ink)}
+  .menu button:hover{background:var(--gray-soft)}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translate(-50%,16px);background:var(--ink);color:var(--bg);padding:11px 18px;border-radius:10px;opacity:0;transition:opacity .25s var(--ease),transform .25s var(--ease);z-index:99;max-width:480px;font-weight:600;font-size:13px;pointer-events:none}
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+  .hint{font-size:12px;color:var(--muted);margin-top:6px}
+  .actions-cell{white-space:nowrap;text-align:right}
+  .drop{border:1.5px dashed var(--brand-line);background:var(--brand-soft);border-radius:var(--r-m);padding:14px 16px;display:flex;gap:14px;align-items:center;margin-bottom:18px;transition:border-color .18s var(--ease)}
+  .drop.over{border-color:var(--brand)}
+  .drop img{max-height:90px;max-width:120px;border-radius:8px;border:1px solid var(--line)}
+  .drop .t{flex:1;font-size:13px;color:var(--ink-2)}
+  .drop .t b{display:block;font-size:14px;margin-bottom:2px;color:var(--ink)}
+  .spin{display:inline-block;width:14px;height:14px;border:2px solid var(--brand-line);border-top-color:var(--brand);border-radius:50%;animation:sp .8s linear infinite;vertical-align:-2px;margin-right:7px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .badge{display:inline-block;background:var(--red-soft);color:var(--red);font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;margin-left:6px}
+  .badge.good{background:var(--green-soft);color:var(--green)}
+  .barline{display:flex;align-items:center;gap:10px}
+  .barline .b{flex:1;height:6px;background:var(--gray-soft);border-radius:4px;overflow:hidden}
+  .barline .b div{height:100%;background:var(--brand);border-radius:4px}
+  .remind{border:1px solid var(--brand-line);background:var(--panel);border-radius:var(--r-m);padding:16px 18px;margin:16px 0 4px;box-shadow:inset 3px 0 0 var(--brand)}
+  .remind h3{margin:0 0 8px;font-size:15px}
+  .remind td{padding:8px 10px}
+  .summary{white-space:pre-wrap;line-height:1.75;font-size:14px;color:var(--ink-2)}
+  .claude-mark{display:inline-flex;align-items:center;gap:7px}
+  .claude-mark i{width:8px;height:8px;border-radius:50%;background:var(--brand);display:inline-block}
+
+  /* ---------- lock ---------- */
+  #lock{position:fixed;inset:0;background:var(--bg);z-index:200;display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px}
+  #lock.on{display:flex}
+  #lock .card{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:36px 40px;display:flex;flex-direction:column;align-items:center;gap:14px;box-shadow:var(--shadow-2);width:360px}
+  #lock img{width:240px}
+  #lock input{width:220px;text-align:center;font-size:24px;letter-spacing:10px;font-family:"Outfit",sans-serif}
+  #lock .shake{animation:shake .35s}
+  @keyframes shake{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+
+  @media (max-width:1280px){
+    nav{width:204px} main{margin-left:204px;padding:24px 22px 40px}
+    .brand{padding:20px 18px 14px}
+    td{padding:10px 7px} th{padding:9px 7px}
+    select.status{padding:5px 22px 5px 9px}
+    .hero{padding:22px 24px} .hero-num{font-size:38px}
+  }
+  @media (max-width:1180px){
+    button.wa .wa-t{display:none} button.wa svg{margin:0}
+  }
+  @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+
+  /* ---------- print ---------- */
+  #printArea{display:none}
+  @media print{
+    html,body{background:#fff!important;color:#000}
+    .app,.modal-bg,.toast,#lock{display:none!important}
+    #printArea{display:block}
+  }
+  .inv,.rep,.label{font-family:"Manrope","Sinhala",Arial,sans-serif;color:#000}
+  .inv{padding:10px 6px;max-width:700px}
+  .inv table td,.inv table th{border-bottom:1px solid #ccc;padding:7px 6px;background:none;color:#000}
+  .inv .tot td{font-weight:700;border-top:2px solid #000}
+  .label{border:2px dashed #000;padding:14px 18px;width:430px;font-size:15px;line-height:1.45;margin-bottom:14px}
+  .label .big{font-size:20px;font-weight:700}
+  .rep{padding:4px 2px;font-size:13px}
+  .rep h1{font-family:"Outfit",sans-serif;font-size:24px;margin:0}
+  .rep h2{font-family:"Outfit",sans-serif;font-size:16px;margin:20px 0 8px;border-bottom:2px solid #fe5f03;padding-bottom:4px}
+  .rep table{width:100%;border-collapse:collapse}
+  .rep td,.rep th{border-bottom:1px solid #ddd;padding:6px;text-align:left;background:none;color:#000;font-size:12.5px}
+  .rep td.n,.rep th.n{text-align:right}
+  .rep .kp{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+  .rep .kp div{border:1px solid #ddd;border-radius:6px;padding:8px 10px;font-size:11.5px;color:#555}
+  .rep .kp b{display:block;font-family:"Outfit",sans-serif;font-size:17px;color:#000;margin-top:2px}
+
+  /* ================= APPLE-STYLE GLASS LAYER ================= */
+  :root{ --r-s:8px; --r-m:16px; --r-l:24px; --spring:cubic-bezier(.32,.72,0,1);
+    --glass:rgba(255,255,255,.62); --glass-strong:rgba(255,255,255,.78); --glass-line:rgba(255,255,255,.7); --glass-edge:rgba(15,20,30,.08);
+    --panel:rgba(255,255,255,.86); --bg:#eef0f3; }
+  html[data-theme="dark"]{ --glass:rgba(30,33,38,.58); --glass-strong:rgba(34,37,43,.8); --glass-line:rgba(255,255,255,.09); --glass-edge:rgba(0,0,0,.4);
+    --panel:rgba(26,29,33,.88); --bg:#0b0c0e; }
+  body{font-family:-apple-system,BlinkMacSystemFont,"Manrope","Sinhala","Segoe UI",system-ui,sans-serif;letter-spacing:-.01em}
+  h1,h2,h3,.v,.hero-num,.display,.stat .v,.card .v{font-family:-apple-system,BlinkMacSystemFont,"Outfit","Sinhala",sans-serif;letter-spacing:-.02em}
+  /* soft colour behind the glass */
+  body::before{content:"";position:fixed;inset:-20vmax;z-index:-1;pointer-events:none;
+    background:radial-gradient(40vmax 40vmax at 8% 6%, rgba(254,95,3,.16), transparent 60%),
+               radial-gradient(42vmax 42vmax at 96% 30%, rgba(70,120,255,.10), transparent 60%),
+               radial-gradient(40vmax 40vmax at 40% 105%, rgba(254,140,60,.10), transparent 60%), var(--bg)}
+  .glass{background:var(--glass);-webkit-backdrop-filter:saturate(180%) blur(24px);backdrop-filter:saturate(180%) blur(24px);border:1px solid var(--glass-line);box-shadow:0 1px 0 rgba(255,255,255,.35) inset,0 10px 40px -12px var(--glass-edge)}
+  html[data-theme="dark"] .glass{box-shadow:0 1px 0 rgba(255,255,255,.06) inset,0 14px 44px -12px rgba(0,0,0,.6)}
+  nav{background:var(--glass);-webkit-backdrop-filter:saturate(180%) blur(24px);backdrop-filter:saturate(180%) blur(24px);border-right:1px solid var(--glass-line)}
+  .panel,.stats,.cards{border-color:var(--glass-line)}
+  .panel{border-radius:var(--r-m)}
+  .stats,.cards{border-radius:var(--r-m);background:var(--glass-line)}
+  .stat,.card{background:var(--panel)}
+  .modal{background:var(--glass-strong);-webkit-backdrop-filter:saturate(180%) blur(30px);backdrop-filter:saturate(180%) blur(30px);border:1px solid var(--glass-line);border-radius:var(--r-l)}
+  .modal-bg{backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);background:rgba(10,12,16,.32)}
+  .menu{background:var(--glass-strong);-webkit-backdrop-filter:saturate(180%) blur(28px);backdrop-filter:saturate(180%) blur(28px);border:1px solid var(--glass-line);border-radius:16px}
+  .toast{background:rgba(20,22,26,.82);color:#fff;-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);border-radius:16px;padding:12px 18px}
+  button.btn{border-radius:12px;transition:transform .35s var(--spring),background .2s,border-color .2s,box-shadow .2s}
+  button.btn:active{transform:scale(.96)}
+  button.primary{box-shadow:0 6px 18px -6px rgba(254,95,3,.55)}
+  input,select,textarea{border-radius:12px}
+  .navlist button{border-radius:12px;transition:background .25s var(--spring),color .2s,transform .35s var(--spring)}
+  .navlist button:active{transform:scale(.97)}
+  .hero{border-radius:var(--r-l);box-shadow:0 24px 60px -24px rgba(0,0,0,.45)}
+  .seg{border-radius:12px}.seg button{border-radius:10px;transition:background .25s var(--spring)}
+  .remind,.alert{border-radius:var(--r-m)}
+
+  /* sync dot */
+  .sync{display:inline-block;width:8px;height:8px;border-radius:50%;background:#34c759;box-shadow:0 0 0 3px rgba(52,199,89,.18);transition:background .3s}
+  .sync.busy{background:#ff9f0a;box-shadow:0 0 0 3px rgba(255,159,10,.2);animation:pulse 1s ease-in-out infinite}
+  .sync.off{background:#8e8e93;box-shadow:0 0 0 3px rgba(142,142,147,.2)}
+  @keyframes pulse{50%{opacity:.4}}
+  .syncrow{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+
+  /* login / boot */
+  #boot{position:fixed;inset:0;z-index:300;display:none;align-items:center;justify-content:center;padding:24px;background:transparent}
+  #boot.on{display:flex}
+  #boot::before{content:"";position:absolute;inset:0;background:var(--bg);z-index:-1}
+  .login{width:100%;max-width:380px;border-radius:28px;padding:32px 28px;display:flex;flex-direction:column;gap:12px;animation:rise .6s var(--spring)}
+  .login img{width:220px;align-self:center;margin-bottom:6px}
+  .login h2{margin:6px 0 0;font-size:24px}
+  .login input{font-size:16px;padding:13px 14px}
+  .btn.big{padding:14px 16px;font-size:15px;border-radius:14px}
+  .lg-msg{color:var(--red);font-size:13px;min-height:18px;text-align:center}
+  @keyframes rise{from{opacity:0;transform:translateY(24px) scale(.98)}to{opacity:1;transform:none}}
+
+  /* mobile-only pieces are hidden on big screens */
+  #mtop,#tabbar,#fab{display:none}
+
+  /* ================= PHONE ================= */
+  @media (max-width:760px){
+    body{font-size:15px}
+    nav{display:none}
+    main{margin-left:0;padding:calc(66px + env(safe-area-inset-top)) 14px calc(110px + env(safe-area-inset-bottom));max-width:none}
+    #mtop{display:flex;position:fixed;top:0;left:0;right:0;z-index:40;align-items:center;gap:10px;padding:calc(8px + env(safe-area-inset-top)) 16px 8px;border-radius:0;border-width:0 0 1px 0}
+    #mtop img{height:26px}
+    #mtop .spacer{flex:1}
+    #mtop .iconbtn{flex:none;width:36px;height:36px;border-radius:50%;border:none;background:var(--gray-soft)}
+    #mtop .iconbtn span{display:none}
+    #tabbar{display:flex;position:fixed;left:12px;right:12px;bottom:calc(10px + env(safe-area-inset-bottom));z-index:40;border-radius:26px;padding:6px;justify-content:space-around}
+    #tabbar button{all:unset;flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px;border-radius:20px;font-size:10.5px;font-weight:600;color:var(--muted);cursor:pointer;transition:color .2s,background .3s var(--spring),transform .35s var(--spring);-webkit-tap-highlight-color:transparent}
+    #tabbar button svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+    #tabbar button.active{color:var(--brand);background:var(--brand-soft)}
+    #tabbar button:active{transform:scale(.92)}
+    #fab{display:flex;position:fixed;right:20px;bottom:calc(92px + env(safe-area-inset-bottom));z-index:39;width:58px;height:58px;border-radius:50%;border:none;background:var(--brand);color:#fff;align-items:center;justify-content:center;box-shadow:0 12px 30px -8px rgba(254,95,3,.7);cursor:pointer;transition:transform .4s var(--spring)}
+    #fab:active{transform:scale(.9)}
+    #fab svg{width:26px;height:26px;stroke:#fff;stroke-width:2.4;fill:none;stroke-linecap:round}
+    #fab.hide{transform:scale(0)}
+    h1{font-size:30px;font-weight:700}
+    .sub{font-size:14px}
+    .row > .spacer{display:none}
+    .row{gap:8px}
+    .hero{grid-template-columns:1fr;padding:22px 20px;gap:8px;border-radius:24px}
+    .hero-num{font-size:36px}
+    .gauge{justify-self:center;max-width:300px;margin-top:4px}
+    .hero .meta{gap:18px}
+    .stats{grid-template-columns:1fr 1fr}
+    .stat{padding:14px}
+    .stat .v{font-size:21px}
+    .cards{grid-template-columns:1fr 1fr}
+    .two,.two-1{grid-template-columns:1fr}
+    .grid2,.grid3{grid-template-columns:1fr}
+    .panel{padding:16px;border-radius:20px}
+    .section-title{font-size:20px}
+    /* lists become cards */
+    table.resp thead{display:none}
+    table.resp,table.resp tbody{display:block}
+    table.resp tr{display:block;padding:12px 2px;border-bottom:1px solid var(--line)}
+    table.resp tr:last-child{border-bottom:none}
+    table.resp tbody tr:hover{background:none}
+    table.resp td{display:flex;justify-content:space-between;align-items:center;gap:12px;border:none;padding:4px 0;text-align:right}
+    table.resp td::before{content:attr(data-label);color:var(--muted);font-size:13px;text-align:left;flex:none}
+    table.resp td:first-child{font-size:16px}
+    table.resp td.actions-cell{justify-content:flex-start;flex-wrap:wrap;gap:8px;padding-top:10px}
+    table.resp td.actions-cell::before,table.resp td:empty::before{display:none}
+    table.resp td .tdv{text-align:right;min-width:0}
+    table.resp td .tdv .cell2{display:block;margin:2px 0 0}
+    table.resp td:first-child .tdv{font-size:17px}
+    td button.btn.sm{padding:9px 14px;font-size:13px}
+    button.wa .wa-t{display:inline!important} button.wa svg{margin-right:6px!important}
+    .tablewrap{margin:0;padding:0}
+    /* sheets slide up from the bottom, like iOS */
+    .modal-bg{align-items:flex-end;padding:0}
+    .modal{max-width:none;border-radius:28px 28px 0 0;padding:14px 18px calc(24px + env(safe-area-inset-bottom));max-height:93vh;overflow:auto;transform:translateY(100%);transition:transform .5s var(--spring)}
+    .modal::before{content:"";display:block;width:38px;height:5px;border-radius:3px;background:var(--line-2);margin:0 auto 14px}
+    .modal-bg.open .modal{transform:none}
+    .modal .actions{position:sticky;bottom:-24px;margin:18px -18px -24px;padding:12px 18px calc(14px + env(safe-area-inset-bottom));background:var(--glass-strong);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);border-top:1px solid var(--line)}
+    .modal .actions .btn{flex:1;padding:14px}
+    input,select,textarea{font-size:16px;padding:12px 13px}
+    .drop{flex-wrap:wrap}
+    .toast{bottom:calc(100px + env(safe-area-inset-bottom));max-width:calc(100vw - 32px)}
+    .menu{min-width:260px}
+    .menu button{padding:13px 12px;font-size:15px}
+    .remind td{display:block;padding:3px 0;border:none}
+    .remind tr{display:block;padding:10px 0;border-bottom:1px solid var(--line)}
+    #lock .card{width:calc(100vw - 40px)}
+  }
+  /* more sheet */
+  .more-list{display:flex;flex-direction:column;gap:4px;margin-top:6px}
+  .more-list button{all:unset;display:flex;align-items:center;gap:14px;padding:14px 12px;border-radius:14px;font-size:16px;font-weight:600;cursor:pointer;color:var(--ink)}
+  .more-list button:active{background:var(--gray-soft)}
+  .more-list svg{width:22px;height:22px;stroke:var(--brand);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+</style>
+</head>
+<body>
+<div class="app">
+  <nav aria-label="Main">
+    <div class="brand"><img class="logo-light" src="logo.png" alt="CoverLanka"><img class="logo-dark" src="logo-dark.png" alt="CoverLanka"><small>Business manager</small></div>
+    <div class="navlist">
+      <button data-page="dashboard" class="active"><svg viewBox="0 0 24 24"><path d="M4 13h6V4H4zM14 20h6v-9h-6zM4 20h6v-4H4zM14 4v4h6V4z"/></svg>Dashboard</button>
+      <button data-page="orders"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg>Orders</button>
+      <button data-page="customers"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18.5 14.8c1.6.8 2.6 2.6 3 5.2"/></svg>Customers</button>
+      <button data-page="quotes"><svg viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg>Quotations</button>
+      <button data-page="stock"><svg viewBox="0 0 24 24"><path d="M3 7.5 12 3l9 4.5v9L12 21l-9-4.5z"/><path d="M3 7.5 12 12l9-4.5M12 12v9"/></svg>Stock</button>
+      <button data-page="expenses"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M7 15h3"/></svg>Expenses</button>
+      <button data-page="partners"><svg viewBox="0 0 24 24"><path d="M12 3v18M16.5 7.5c0-1.7-2-3-4.5-3s-4.5 1.3-4.5 3 2 2.6 4.5 3 4.5 1.3 4.5 3-2 3-4.5 3-4.5-1.3-4.5-3"/></svg>Capital & partners</button>
+      <button data-page="settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg>Settings & backup</button>
+    </div>
+    <div class="navfoot">
+      <div class="syncrow"><span id="syncDot" class="sync"></span><span id="syncText">Synced</span></div>
+      <div class="tip">Got an order? Press <kbd>Ctrl</kbd> + <kbd>V</kbd> with the screenshot.</div>
+      <div class="tools">
+        <button class="iconbtn" id="themeBtn" title="Switch light / dark"></button>
+        <button class="iconbtn" id="lockBtn" title="Lock the app" style="display:none"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Lock</button>
+      </div>
+    </div>
+  </nav>
+  <main id="main"></main>
+</div>
+
+<header id="mtop" class="glass">
+  <img class="logo-light" src="logo.png" alt="CoverLanka"><img class="logo-dark" src="logo-dark.png" alt="CoverLanka">
+  <div class="spacer"></div>
+  <span class="syncrow"><span id="syncDotM" class="sync"></span></span>
+  <button class="iconbtn" id="themeBtnM" aria-label="Switch light or dark"></button>
+</header>
+<div id="tabbar" class="glass" role="navigation" aria-label="Main">
+  <button data-tab="dashboard"><svg viewBox="0 0 24 24"><path d="M4 13h6V4H4zM14 20h6v-9h-6zM4 20h6v-4H4zM14 4v4h6V4z"/></svg>Home</button>
+  <button data-tab="orders"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg>Orders</button>
+  <button data-tab="quotes"><svg viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg>Quotes</button>
+  <button data-tab="stock"><svg viewBox="0 0 24 24"><path d="M3 7.5 12 3l9 4.5v9L12 21l-9-4.5z"/><path d="M3 7.5 12 12l9-4.5M12 12v9"/></svg>Stock</button>
+  <button data-tab="more"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>More</button>
+</div>
+<button id="fab" aria-label="New order"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+<div id="boot"></div>
+<div class="modal-bg" id="modalBg"><div class="modal" id="modal" role="dialog" aria-modal="true"></div></div>
+<div class="toast" id="toast" role="status"></div>
+<div id="lock">
+  <div class="card">
+    <img class="logo-light" src="logo.png" alt="CoverLanka"><img class="logo-dark" src="logo-dark.png" alt="CoverLanka">
+    <div class="muted">Enter your PIN to open</div>
+    <input type="password" id="lockPin" inputmode="numeric" maxlength="6" autocomplete="off" aria-label="PIN">
+    <button class="btn primary" id="lockGo" style="width:220px">Unlock</button>
+    <div id="lockMsg" style="color:var(--red);font-size:13px;min-height:18px"></div>
+    <a href="#" id="lockForgot" style="font-size:12px;color:var(--muted)">Forgot PIN?</a>
+  </div>
+</div>
+<div id="printArea"></div>
+<script src="firebase-bundle.js"></script>
+<script src="config.js"></script>
+
+<script>
+/* ================= CONSTANTS ================= */
+const STATUSES = ["New","Confirmed","Dispatched","Delivered","Returned","Cancelled"];
+const PAYMENTS = ["COD","Bank Transfer"];
+const EXP_CATS = ["Facebook Ads","Ad production","Packaging","Stock transport","Travel","Setup & registration","Other"];
+const DISTRICTS = ["Ampara","Anuradhapura","Badulla","Batticaloa","Colombo","Galle","Gampaha","Hambantota","Jaffna","Kalutara","Kandy","Kegalle","Kilinochchi","Kurunegala","Mannar","Matale","Matara","Monaragala","Mullaitivu","Nuwara Eliya","Polonnaruwa","Puttalam","Ratnapura","Trincomalee","Vavuniya"];
+const LS_KEY = "coverlanka_data_v1";
+const DEFAULT_MODEL = "claude-sonnet-5-5";
+const DEFAULT_WA = [
+  { name:"Order confirmed", text:"ආයුබෝවන් {name} 😊\nCoverLanka වෙතින් ඔබගේ order එක ({orderNo}) confirm කළා.\nRaincoat {qty}ක් — මුළු මුදල රු. {total} (delivery සමඟ).\nදින 2-3ක් ඇතුළත ලැබෙනු ඇත. ස්තූතියි! 🙏" },
+  { name:"Dispatched (with tracking)", text:"ආයුබෝවන් {name} 😊\nඔබගේ CoverLanka order එක ({orderNo}) {courier} හරහා එවා ඇත 📦\nTracking no: {tracking}\nParcel එක ලැබෙන විට රු. {total} ගෙවන්න. ස්තූතියි! 🙏" },
+  { name:"Thank you (delivered)", text:"ස්තූතියි {name}! 🙏\nඔබගේ CoverLanka raincoat එක ලැබුණා කියා හිතනවා. ගැටලුවක් ඇත්නම් අපට කියන්න.\nඔබගේ යාළුවන්ටත් CoverLanka ගැන කියන්න 😊" },
+  { name:"Can't reach you (call)", text:"ආයුබෝවන් {name},\nඔබගේ CoverLanka order එක ({orderNo}) ගැන කතා කරන්න call කළා, නමුත් සම්බන්ධ කරගන්න බැරි වුණා. කරුණාකර මෙම අංකයට reply කරන්න. ස්තූතියි! 🙏" }
+];
+
+function today(){ const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function thisMonth(){ return today().slice(0,7); }
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+
+/* ================= STORAGE ================= */
+function defaultData(){
+  const pid = uid();
+  return {
+    version:1,
+    settings:{ businessName:"CoverLanka", phone:"", address:"", defaultDelivery:450, defaultCourierCost:450, courier:"Domex" },
+    products:[{ id:pid, code:"RC-001", name:"Raincoat", cost:1800, price:2900, reorder:5, active:true }],
+    restocks:[{ id:uid(), date:today(), productId:pid, qty:30, note:"Opening stock" }],
+    orders:[], expenses:[], nextOrderNo:1
+  };
+}
+// Brings older data up to date and loads the starting figures once.
+function migrate(d){
+  d.settings = d.settings || {};
+  if(d.settings.claudeModel==null) d.settings.claudeModel = DEFAULT_MODEL;
+  if(d.settings.claudeKey==null) d.settings.claudeKey = "";
+  if(!d.settings.wa) d.settings.wa = JSON.parse(JSON.stringify(DEFAULT_WA));
+  if(d.settings.backupFolder==null) d.settings.backupFolder = "";
+  if(d.settings.remindNewDays==null) d.settings.remindNewDays = 2;
+  if(d.settings.remindDispatchDays==null) d.settings.remindDispatchDays = 5;
+  if((d.version||1) < 2){
+    // cost price confirmed as Rs. 1,800
+    d.products.forEach(p=>{ if(p.code==="RC-001" && num(p.cost)===2900) p.cost=1800; });
+    d.orders.forEach(o=>{ if(num(o.unitCost)===2900) o.unitCost=1800; });
+    d.restocks.forEach(r=>{ if(r.amountPaid==null){ const p=d.products.find(x=>x.id===r.productId); r.amountPaid = num(r.qty)*(p?num(p.cost):0); } });
+    if(!d.partners) d.partners = [1,2,3,4].map(i=>({ id:uid(), name:"Partner "+i, amount:25000, date:today() }));
+    if(!d.startupLoaded){
+      const E=(c,desc,a)=>({ id:uid(), date:today(), category:c, description:desc, amount:a });
+      d.expenses.push(
+        E("Stock transport","Supplier → Pettah",300),
+        E("Stock transport","Pettah → Matara",430),
+        E("Stock transport","Matara → our place",570),
+        E("Setup & registration","Business bank account opening",2000),
+        E("Setup & registration","Business SIM card",300),
+        E("Travel","Travel for bank account & SIM",740),
+        E("Packaging","Packing covers (50)",1500),
+        E("Setup & registration","ATM card",500),
+        E("Setup & registration","Domex registration",1500),
+        E("Travel","Travel for Domex registration",660),
+        E("Ad production","Ad video production",7900),
+        E("Ad production","Delivery to the ad shoot location",500),
+        E("Facebook Ads","Facebook ad budget (running)",5000)
+      );
+      d.startupLoaded = true;
+    }
+    d.version = 2;
+  }
+  d.orders.forEach(o=>{ if(o.district==null) o.district=""; });
+  if(!d.quotes) d.quotes=[]; if(!d.nextQuoteNo) d.nextQuoteNo=1;
+  if(!d.settings.pricing) d.settings.pricing={ firstKg:450, extraKg:150, courierFirstKg:450, courierExtraKg:150, tiers:[{min:5,off:150},{min:10,off:300}] };
+  d.products.forEach(p=>{ if(p.weightKg==null) p.weightKg=1; });
+  return d;
+}
+let DB;
+/* ================= CLOUD STORAGE (Firebase) =================
+   Every list is a Firestore collection (one document per item), so 4 phones can
+   add and change things at the same time without overwriting each other.
+   Settings that belong to one phone only (theme, PIN) stay on that phone. */
+const COLS = ["orders","products","restocks","expenses","partners","quotes"];
+const LOCAL_SETTING_KEYS = ["theme","pinHash","pinSalt","recoveryHash","backupFolder","lastExtraBackup","lastExtraBackupDay"];
+const CLOUD = { app:null, auth:null, db:null, user:null, ready:false, unsub:[], last:{}, lastSettings:"", pending:0, online:navigator.onLine };
+function localSettings(){ try{ return JSON.parse(localStorage.getItem("coverlanka_local")||"{}"); }catch(e){ return {}; } }
+function saveLocalSettings(){ const o={}; LOCAL_SETTING_KEYS.forEach(k=>{ if(DB.settings[k]!=null) o[k]=DB.settings[k]; }); try{ localStorage.setItem("coverlanka_local", JSON.stringify(o)); }catch(e){} }
+function sharedSettings(){ const s={...DB.settings}; LOCAL_SETTING_KEYS.forEach(k=>delete s[k]); return { settings:s, lastSummary:DB.lastSummary||null, startupLoaded:!!DB.startupLoaded, version:DB.version||1 }; }
+function emptyDB(){ return { version:2, settings:{}, products:[], restocks:[], orders:[], expenses:[], partners:[], quotes:[], startupLoaded:true }; }
+
+function setSyncState(){
+  const st = !CLOUD.online ? "off" : (CLOUD.pending>0 ? "busy" : "ok");
+  const m=document.getElementById("syncDotM"); if(m) m.className="sync "+st;
+  const el=document.getElementById("syncDot"); if(!el) return;
+  el.className="sync "+st;
+  el.title = st==="off" ? "Offline — changes are saved on this phone and will sync when internet is back" : (st==="busy" ? "Saving…" : "All changes saved and shared");
+  const t=document.getElementById("syncText"); if(t) t.textContent = st==="off" ? "Offline" : (st==="busy" ? "Saving…" : "Synced");
+}
+window.addEventListener("online",()=>{ CLOUD.online=true; setSyncState(); });
+window.addEventListener("offline",()=>{ CLOUD.online=false; setSyncState(); });
+
+function saveDB(){
+  saveLocalSettings();
+  if(!CLOUD.ready) return;
+  const F=window.FB, batches=[]; let b=F.writeBatch(CLOUD.db), n=0;
+  const put=(ref,data)=>{ b.set(ref,data); if(++n>=450){ batches.push(b); b=F.writeBatch(CLOUD.db); n=0; } };
+  const del=(ref)=>{ b.delete(ref); if(++n>=450){ batches.push(b); b=F.writeBatch(CLOUD.db); n=0; } };
+  COLS.forEach(col=>{
+    const last=CLOUD.last[col]||(CLOUD.last[col]=new Map()); const seen=new Set();
+    (DB[col]||[]).forEach(item=>{
+      if(!item.id) item.id=uid();
+      seen.add(item.id);
+      const j=JSON.stringify(item);
+      if(last.get(item.id)!==j){ last.set(item.id,j); put(F.doc(CLOUD.db,col,item.id), JSON.parse(j)); }
+    });
+    [...last.keys()].forEach(id=>{ if(!seen.has(id)){ last.delete(id); del(F.doc(CLOUD.db,col,id)); } });
+  });
+  const ss=JSON.stringify(sharedSettings());
+  if(ss!==CLOUD.lastSettings){ CLOUD.lastSettings=ss; put(F.doc(CLOUD.db,"meta","settings"), JSON.parse(ss)); }
+  if(n>0) batches.push(b);
+  batches.forEach(bt=>{ CLOUD.pending++; setSyncState();
+    bt.commit().catch(e=>{ console.error(e); toast("Could not save online: "+e.message); }).finally(()=>{ CLOUD.pending--; setSyncState(); }); });
+}
+
+/* Order / quotation numbers come from a shared counter so two phones never get the same number. */
+async function nextNumber(kind){
+  const F=window.FB; const localMax = kind==="order" ? Math.max(0,...DB.orders.map(o=>num(o.no))) : Math.max(0,...(DB.quotes||[]).map(q=>num(q.no)));
+  if(!CLOUD.ready) return localMax+1;
+  const ref=F.doc(CLOUD.db,"meta","counters");
+  const tx=F.runTransaction(CLOUD.db, async t=>{ const s=await t.get(ref); const cur=s.exists()?num(s.data()[kind]):0; const nx=Math.max(cur,localMax)+1; t.set(ref,{[kind]:nx},{merge:true}); return nx; });
+  try{ return await Promise.race([tx, new Promise((_,rej)=>setTimeout(()=>rej(new Error("offline")),5000))]); }
+  catch(e){ return localMax+1; }   // offline: use the next free number on this phone
+}
+
+let _renderT=null;
+function scheduleRender(){
+  clearTimeout(_renderT);
+  _renderT=setTimeout(()=>{
+    const a=document.activeElement;
+    if(a && a.closest && a.closest("#main") && /INPUT|TEXTAREA|SELECT/.test(a.tagName) && a.type!=="checkbox"){ scheduleRender(); return; } // don't redraw while typing
+    if(DB) render();
+  }, 250);
+}
+
+function startListening(){
+  const F=window.FB;
+  CLOUD.unsub.forEach(u=>u()); CLOUD.unsub=[];
+  let firstLoads = COLS.length+1;
+  return new Promise(resolve=>{
+    const done=()=>{ if(--firstLoads===0) resolve(); };
+    COLS.forEach(col=>{
+      let first=true; const last=CLOUD.last[col]=new Map();
+      CLOUD.unsub.push(F.onSnapshot(F.collection(CLOUD.db,col), snap=>{
+        snap.docChanges().forEach(ch=>{
+          const id=ch.doc.id, arr=DB[col]||(DB[col]=[]);
+          const i=arr.findIndex(x=>x.id===id);
+          if(ch.type==="removed"){ if(i>=0) arr.splice(i,1); last.delete(id); }
+          else { const data={...ch.doc.data(), id}; last.set(id, JSON.stringify(data)); if(i>=0) arr[i]=data; else arr.push(data); }
+        });
+        if(first){ first=false; done(); } else scheduleRender();
+      }, err=>{ console.error(err); if(first){ first=false; done(); } toast("Sync problem: "+err.message); }));
+    });
+    let firstS=true;
+    CLOUD.unsub.push(F.onSnapshot(F.doc(CLOUD.db,"meta","settings"), snap=>{
+      if(snap.exists()){ const d=snap.data(); CLOUD.lastSettings=JSON.stringify(d);
+        const loc={}; LOCAL_SETTING_KEYS.forEach(k=>{ if(DB.settings[k]!=null) loc[k]=DB.settings[k]; });
+        DB.settings={...(d.settings||{}), ...loc}; DB.lastSummary=d.lastSummary||null; DB.startupLoaded=d.startupLoaded; DB.version=d.version||DB.version; }
+      if(firstS){ firstS=false; done(); } else scheduleRender();
+    }, err=>{ console.error(err); if(firstS){ firstS=false; done(); } }));
+  });
+}
+
+/* ---------- login & first start ---------- */
+function showLogin(msg){
+  $("#boot").innerHTML=`<div class="login glass">
+    <img class="logo-light" src="logo.png" alt="CoverLanka"><img class="logo-dark" src="logo-dark.png" alt="CoverLanka">
+    <h2>Sign in</h2><p class="muted" style="margin:-6px 0 6px">Use the CoverLanka team login.</p>
+    <input type="email" id="lg_email" placeholder="Email" autocomplete="username" value="${esc(localStorage.getItem("coverlanka_email")||(window.CL_CONFIG&&CL_CONFIG.teamEmail)||"")}">
+    <input type="password" id="lg_pass" placeholder="Password" autocomplete="current-password">
+    <button class="btn primary big" id="lg_go">Sign in</button>
+    <div id="lg_msg" class="lg-msg">${esc(msg||"")}</div></div>`;
+  $("#boot").classList.add("on");
+  const go=async()=>{
+    const e=$("#lg_email").value.trim(), p=$("#lg_pass").value;
+    if(!e||!p){ $("#lg_msg").textContent="Enter the email and password."; return; }
+    $("#lg_go").disabled=true; $("#lg_go").innerHTML='<span class="spin"></span>Signing in…';
+    try{ await window.FB.signInWithEmailAndPassword(CLOUD.auth,e,p); localStorage.setItem("coverlanka_email",e); }
+    catch(err){ $("#lg_go").disabled=false; $("#lg_go").textContent="Sign in";
+      const c=String(err.code||""); $("#lg_msg").textContent = /invalid|wrong|not-found|credential/.test(c) ? "Email or password is not right." : (/network/.test(c)?"No internet connection.":err.message); }
+  };
+  $("#lg_go").onclick=go; $("#lg_pass").addEventListener("keydown",e=>{ if(e.key==="Enter") go(); });
+  setTimeout(()=>($("#lg_email").value?$("#lg_pass"):$("#lg_email")).focus(),80);
+}
+function showLoading(t){ $("#boot").innerHTML=`<div class="login glass" style="align-items:center"><img class="logo-light" src="logo.png" alt="CoverLanka"><img class="logo-dark" src="logo-dark.png" alt="CoverLanka"><div class="muted"><span class="spin"></span>${esc(t)}</div></div>`; $("#boot").classList.add("on"); }
+function showFirstRun(){
+  $("#boot").innerHTML=`<div class="login glass" style="max-width:460px">
+    <img class="logo-light" src="logo.png" alt="CoverLanka"><img class="logo-dark" src="logo-dark.png" alt="CoverLanka">
+    <h2>Set up CoverLanka online</h2>
+    <p class="muted" style="margin:0">The online database is empty. Bring in the data from the laptop app, or start with the starting figures.</p>
+    <button class="btn primary big" id="fr_imp">Bring in a backup file from the laptop</button>
+    <input type="file" id="fr_file" accept=".json" style="display:none">
+    <button class="btn big" id="fr_new">Start with the starting figures</button>
+    <p class="hint">On the laptop app: Settings &amp; backup → Download backup file. Then choose that file here.</p>
+    <div id="fr_msg" class="lg-msg"></div></div>`;
+  $("#boot").classList.add("on");
+  $("#fr_imp").onclick=()=>$("#fr_file").click();
+  $("#fr_file").onchange=e=>{ const f=e.target.files[0]; if(!f) return; const r=new FileReader();
+    r.onload=()=>{ try{ const d=JSON.parse(r.result); if(!d.orders||!d.products) throw new Error("This is not a CoverLanka backup file"); uploadAll(d); }catch(err){ $("#fr_msg").textContent=err.message; } }; r.readAsText(f); };
+  $("#fr_new").onclick=()=>uploadAll(defaultData());
+}
+function uploadAll(d){
+  const keepLocal={}; LOCAL_SETTING_KEYS.forEach(k=>{ if(DB.settings[k]!=null) keepLocal[k]=DB.settings[k]; });
+  d=migrate(d);
+  DB={...emptyDB(), ...d}; COLS.forEach(c=>{ DB[c]=DB[c]||[]; });
+  DB.settings={...DB.settings, ...keepLocal};
+  COLS.forEach(c=>CLOUD.last[c]=new Map()); CLOUD.lastSettings="";
+  saveDB();
+  const mo=Math.max(0,...DB.orders.map(o=>num(o.no))), mq=Math.max(0,...DB.quotes.map(q=>num(q.no)));
+  window.FB.setDoc(window.FB.doc(CLOUD.db,"meta","counters"),{order:mo,quote:mq},{merge:true}).catch(()=>{});
+  $("#boot").classList.remove("on"); toast("All set — data is online"); render();
+}
+
+async function boot(){
+  DB=emptyDB(); Object.assign(DB.settings, localSettings());
+  applyTheme();
+  const cfg=window.CL_CONFIG&&CL_CONFIG.firebase;
+  if(!cfg||!cfg.apiKey){ $("#boot").innerHTML='<div class="login glass"><h2>Not connected yet</h2><p class="muted">The Firebase settings (config.js) are missing.</p></div>'; $("#boot").classList.add("on"); return; }
+  const F=window.FB;
+  CLOUD.app=F.initializeApp(cfg);
+  CLOUD.auth=F.getAuth(CLOUD.app);
+  try{ CLOUD.db=F.initializeFirestore(CLOUD.app,{ localCache:F.persistentLocalCache({ tabManager:F.persistentMultipleTabManager() }) }); }
+  catch(e){ CLOUD.db=F.initializeFirestore(CLOUD.app,{}); }
+  showLoading("Opening…");
+  F.onAuthStateChanged(CLOUD.auth, async user=>{
+    CLOUD.user=user;
+    if(!user){ CLOUD.ready=false; CLOUD.unsub.forEach(u=>u()); CLOUD.unsub=[]; showLogin(); return; }
+    showLoading("Loading your data…");
+    await startListening();
+    CLOUD.ready=true; setSyncState();
+    if(!DB.products.length && !DB.orders.length && !DB.settings.businessName){ showFirstRun(); return; }
+    const before=JSON.stringify(sharedSettings());
+    migrate(DB);
+    if(JSON.stringify(sharedSettings())!==before || DB.products.some(p=>p.weightKg==null)) saveDB();
+    $("#boot").classList.remove("on");
+    render();
+    if(DB.settings.pinHash) showLock();
+  });
+}
+async function signOutTeam(){ if(!confirm("Sign out of CoverLanka on this device?")) return; await window.FB.signOut(CLOUD.auth); }
+
+/* ================= HELPERS ================= */
+const $ = s => document.querySelector(s);
+function esc(v){ return String(v ?? "").replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function num(v){ const n = parseFloat(v); return isNaN(n)?0:n; }
+function money(n){ n = Math.round(Number(n)||0); return (n<0?"-":"")+"Rs. "+Math.abs(n).toLocaleString("en-US"); }
+function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove("show"),2600); }
+function product(id){ return DB.products.find(p=>p.id===id); }
+function orderNo(o){ return "CL-"+String(o.no).padStart(4,"0"); }
+function monthName(ym){ if(!ym) return "All time"; const [y,m]=ym.split("-"); return new Date(+y,+m-1,1).toLocaleString("en-US",{month:"long",year:"numeric"}); }
+function normPhone(p){ let d=String(p||"").replace(/\D/g,""); if(d.startsWith("94")&&d.length===11) d="0"+d.slice(2); if(d.length===9&&d[0]==="7") d="0"+d; return d; }
+
+function orderCalc(o){
+  const qty = num(o.qty)||1;
+  const p = product(o.productId);
+  const unitCost = o.unitCost!=null ? num(o.unitCost) : (p?num(p.cost):0);
+  const subtotal = num(o.price)*qty;
+  const total = subtotal - num(o.discount) + num(o.delivery);
+  const productCost = unitCost*qty;
+  let profit;
+  if(o.status==="Cancelled") profit = 0;
+  else if(o.status==="Returned") profit = -num(o.courierCost);
+  else profit = total - productCost - num(o.courierCost);
+  return { qty, subtotal, total, productCost, profit };
+}
+/* Prices, bulk discount and weight-based delivery */
+function pricing(){ return DB.settings.pricing || { firstKg:450, extraKg:150, courierFirstKg:450, courierExtraKg:150, tiers:[] }; }
+function itemsWeight(items){ return items.reduce((a,it)=>{ const p=it.productId?product(it.productId):null; return a+(p?num(p.weightKg==null?1:p.weightKg):0)*num(it.qty); },0); }
+function byWeight(kg, first, extra){ if(kg<=0) return 0; return num(first)+num(extra)*(Math.ceil(kg-1e-9)-1); }
+function deliveryCharge(kg){ const P=pricing(); return byWeight(kg,P.firstKg,P.extraKg); }
+function courierCharge(kg){ const P=pricing(); return byWeight(kg,P.courierFirstKg,P.courierExtraKg); }
+function bulkOffPerUnit(qty){ const t=[...(pricing().tiers||[])].filter(t=>num(t.min)>0).sort((a,b)=>num(b.min)-num(a.min)).find(t=>qty>=num(t.min)); return t?num(t.off):0; }
+function countsTowardStock(o){ return o.status!=="Cancelled" && o.status!=="Returned"; }
+function stockOf(p){
+  const stockIn = DB.restocks.filter(r=>r.productId===p.id).reduce((a,r)=>a+num(r.qty),0);
+  const sold = DB.orders.filter(o=>o.productId===p.id && countsTowardStock(o)).reduce((a,o)=>a+(num(o.qty)||1),0);
+  const available = stockIn - sold;
+  const status = available<=0 ? "Out of stock" : (available<=num(p.reorder) ? "Low stock" : "OK");
+  return { stockIn, sold, available, status };
+}
+function stockClass(s){ return s==="OK"?"ok":(s==="Low stock"?"low":"out"); }
+
+/* Money picture for the whole business (all time) */
+function businessMoney(){
+  const capital = (DB.partners||[]).reduce((a,p)=>a+num(p.amount),0);
+  const stockBought = DB.restocks.reduce((a,r)=>a+num(r.amountPaid),0);
+  const expenses = DB.expenses.reduce((a,e)=>a+num(e.amount),0);
+  const delivered = DB.orders.filter(o=>o.status==="Delivered");
+  const returned = DB.orders.filter(o=>o.status==="Returned");
+  const sales = delivered.reduce((a,o)=>a+orderCalc(o).total,0);
+  const courier = [...delivered,...returned].reduce((a,o)=>a+num(o.courierCost),0);
+  const pcost = delivered.reduce((a,o)=>a+orderCalc(o).productCost,0);
+  const cash = capital - stockBought - expenses - courier + sales;
+  const stockValue = DB.products.reduce((a,p)=>a+Math.max(0,stockOf(p).available)*num(p.cost),0);
+  const worth = cash + stockValue;
+  const netProfit = sales - pcost - courier - expenses;
+  return { capital, stockBought, expenses, sales, courier, pcost, cash, stockValue, worth, netProfit };
+}
+
+/* Customers are built from the orders (one per phone number) */
+function customers(){
+  const map = new Map();
+  [...DB.orders].sort((a,b)=>a.no-b.no).forEach(o=>{
+    const key = normPhone(o.phone) || ("name:"+(o.customer||"").toLowerCase());
+    let c = map.get(key);
+    if(!c){ c={ key, phone:o.phone, name:o.customer, address:o.address, city:o.city, district:o.district, orders:0, delivered:0, returned:0, cancelled:0, spent:0, first:o.date, last:o.date }; map.set(key,c); }
+    c.whatsapp=o.whatsapp||c.whatsapp; c.name=o.customer||c.name; c.address=o.address||c.address; c.city=o.city||c.city; c.district=o.district||c.district; c.phone=o.phone||c.phone;
+    c.orders++; if(o.status==="Delivered"){ c.delivered++; c.spent+=orderCalc(o).total; }
+    if(o.status==="Returned") c.returned++; if(o.status==="Cancelled") c.cancelled++;
+    if((o.date||"")>(c.last||"")) c.last=o.date;
+  });
+  return [...map.values()];
+}
+function findCustomerByPhone(phone){ const k=normPhone(phone); if(k.length<9) return null; return customers().find(c=>c.key===k || normPhone(c.whatsapp)===k)||null; }
+
+/* ================= NAV ================= */
+let page = "dashboard", lastPage = null;
+const state = { dashMonth: thisMonth(), orderSearch:"", orderStatus:"", orderMonth:"", expMonth:"", custSearch:"" };
+document.querySelectorAll(".navlist button").forEach(b=>b.onclick=()=>{ page=b.dataset.page; render(); });
+function render(){
+  document.querySelectorAll(".navlist button").forEach(b=>{ const on=b.dataset.page===page; b.classList.toggle("active", on); if(on) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current"); });
+  ({dashboard:renderDashboard, orders:renderOrders, customers:renderCustomers, quotes:renderQuotes, stock:renderStock, expenses:renderExpenses, partners:renderPartners, settings:renderSettings})[page]();
+  const m=$("#main");
+  if(page!==lastPage){ m.classList.remove("page"); void m.offsetWidth; m.classList.add("page"); window.scrollTo(0,0); lastPage=page; }
+  renderNavTools();
+  labelTables();
+  document.querySelectorAll("#tabbar [data-tab]").forEach(b=>b.classList.toggle("active", b.dataset.tab===page || (b.dataset.tab==="more" && ["customers","expenses","partners","settings"].includes(page))));
+  $("#fab").classList.toggle("hide", !["dashboard","orders","customers"].includes(page));
+  setSyncState();
+}
+function labelTables(){
+  document.querySelectorAll("#main table").forEach(t=>{
+    const heads=[...t.querySelectorAll("thead th")].map(th=>th.textContent.trim()); if(!heads.length) return;
+    t.classList.add("resp");
+    t.querySelectorAll("tbody tr").forEach(tr=>[...tr.children].forEach((td,i)=>{ if(td.hasAttribute("data-label")) return; td.setAttribute("data-label", heads[i]||"");
+      if(!td.classList.contains("actions-cell") && td.childNodes.length){ const w=document.createElement("div"); w.className="tdv"; while(td.firstChild) w.appendChild(td.firstChild); td.appendChild(w); } }));
+  });
+}
+const MORE_ITEMS=[["customers","Customers",'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18.5 14.8c1.6.8 2.6 2.6 3 5.2"/>'],
+  ["expenses","Expenses",'<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M7 15h3"/>'],
+  ["partners","Capital & partners",'<path d="M12 3v18M16.5 7.5c0-1.7-2-3-4.5-3s-4.5 1.3-4.5 3 2 2.6 4.5 3 4.5 1.3 4.5 3-2 3-4.5 3-4.5-1.3-4.5-3"/>'],
+  ["settings","Settings & backup",'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/>']];
+function openMore(){
+  modalKind="more";
+  $("#modal").innerHTML=`<h2>More</h2><div class="more-list">${MORE_ITEMS.map(([k,l,ic])=>`<button data-go="${k}"><svg viewBox="0 0 24 24">${ic}</svg>${l}</button>`).join("")}
+    ${DB.settings.pinHash?`<button data-go="lock"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Lock now</button>`:""}</div>`;
+  openModalBg();
+  $("#modal").querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{ const g=b.dataset.go; closeModal(); if(g==="lock") showLock(); else { page=g; render(); } });
+}
+document.querySelectorAll("#tabbar [data-tab]").forEach(b=>b.onclick=()=>{ if(b.dataset.tab==="more") openMore(); else { page=b.dataset.tab; render(); } });
+$("#fab").onclick=()=>openOrder();
+
+/* ================= THEME ================= */
+const ICON_MOON='<svg viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>';
+const ICON_SUN='<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
+function currentTheme(){ return (DB && DB.settings && DB.settings.theme) || "light"; }
+function applyTheme(animate){
+  if(animate){ document.body.classList.add("theming"); setTimeout(()=>document.body.classList.remove("theming"),400); }
+  document.documentElement.setAttribute("data-theme", currentTheme());
+  try{ localStorage.setItem("coverlanka_theme", currentTheme()); }catch(e){}
+}
+function renderNavTools(){
+  const dark=currentTheme()==="dark";
+  $("#themeBtn").innerHTML = dark ? ICON_SUN+"Light" : ICON_MOON+"Dark";
+  $("#themeBtnM").innerHTML = (dark ? ICON_SUN : ICON_MOON)+"<span></span>";
+  $("#lockBtn").style.display = DB.settings.pinHash ? "" : "none";
+}
+$("#themeBtnM").onclick=()=>$("#themeBtn").click();
+$("#themeBtn").onclick=()=>{ DB.settings.theme = currentTheme()==="dark" ? "light" : "dark"; saveDB(); applyTheme(true); renderNavTools(); };
+$("#lockBtn").onclick=()=>showLock();
+
+/* ================= REMINDERS ================= */
+function daysSince(d){ if(!d) return 0; return Math.floor((new Date(today()) - new Date(d)) / 86400000); }
+function reminders(){
+  const nd=num(DB.settings.remindNewDays)||2, dd=num(DB.settings.remindDispatchDays)||5;
+  const list=[];
+  DB.orders.forEach(o=>{
+    if((o.status==="New"||o.status==="Confirmed") && daysSince(o.date)>=nd) list.push({o, why:`${o.status} for ${daysSince(o.date)} days — not dispatched yet`});
+    if(o.status==="Dispatched" && daysSince(o.dispatchedDate||o.date)>=dd) list.push({o, why:`Dispatched ${daysSince(o.dispatchedDate||o.date)} days ago — not marked delivered`});
+  });
+  return list.sort((a,b)=>a.o.no-b.o.no);
+}
+function stockRunway(){
+  const since = new Date(new Date(today()).getTime()-14*86400000).toISOString().slice(0,10);
+  const sold14 = DB.orders.filter(o=>countsTowardStock(o) && (o.date||"")>=since).reduce((a,o)=>a+(num(o.qty)||1),0);
+  const avail = DB.products.filter(p=>p.active!==false).reduce((a,p)=>a+stockOf(p).available,0);
+  if(!sold14) return { perDay:0, days:null, avail };
+  const perDay = sold14/14; return { perDay, days: Math.floor(avail/perDay), avail };
+}
+
+/* ================= DASHBOARD ================= */
+function gaugeSVG(pct){
+  // the logo's swoosh as a progress arc
+  const d="M 20 150 C 90 70, 170 40, 245 40 S 370 70, 380 130";
+  return `<svg viewBox="0 0 400 170" aria-hidden="true">
+    <path class="track" d="${d}" fill="none" stroke-width="14" stroke-linecap="round"/>
+    <path class="fill" id="gFill" d="${d}" fill="none" stroke-width="14" pathLength="100" stroke-dasharray="100" stroke-dashoffset="100"/>
+  </svg>`;
+}
+function renderDashboard(){
+  const ym = state.dashMonth;
+  const inRange = d => !ym || (d||"").slice(0,7)===ym;
+  const orders = DB.orders.filter(o=>inRange(o.date));
+  const live = orders.filter(o=>o.status!=="Cancelled");
+  const delivered = orders.filter(o=>o.status==="Delivered");
+  const returned = orders.filter(o=>o.status==="Returned");
+  const pending = orders.filter(o=>["New","Confirmed","Dispatched"].includes(o.status));
+  const dispatched = orders.filter(o=>o.status==="Dispatched");
+  const sales = delivered.reduce((a,o)=>a+orderCalc(o).total,0);
+  const pcost = delivered.reduce((a,o)=>a+orderCalc(o).productCost,0);
+  const courier = [...delivered,...returned].reduce((a,o)=>a+num(o.courierCost),0);
+  const exps = DB.expenses.filter(e=>inRange(e.date)).reduce((a,e)=>a+num(e.amount),0);
+  const net = sales - pcost - courier - exps;
+  const codDue = dispatched.filter(o=>o.payment==="COD").reduce((a,o)=>a+orderCalc(o).total,0);
+  const pipeline = pending.reduce((a,o)=>a+orderCalc(o).total,0);
+  const alerts = DB.products.filter(p=>p.active!==false).map(p=>({p,s:stockOf(p)})).filter(x=>x.s.status!=="OK");
+  const recent = [...DB.orders].sort((a,b)=>b.no-a.no).slice(0,6);
+  const M = businessMoney();
+  const pct = M.capital ? Math.round(M.worth/M.capital*100) : 0;
+  const dist = {}; live.forEach(o=>{ const k=o.district||o.city||"Not set"; dist[k]=(dist[k]||0)+1; });
+  const topDist = Object.entries(dist).sort((a,b)=>b[1]-a[1]).slice(0,6); const maxD = topDist.length?topDist[0][1]:1;
+  const p0 = DB.products[0]||{};
+  const perCoat = num(p0.price) + deliveryCharge(num(p0.weightKg||1)) - num(p0.cost) - courierCharge(num(p0.weightKg||1));
+  const rem = reminders(); const run = stockRunway();
+  const sum = DB.lastSummary;
+
+  $("#main").innerHTML = `
+    <div class="row"><div><h1>Dashboard</h1><p class="sub" style="margin:0">${esc(DB.settings.businessName)} · ${new Date().toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"})}</p></div>
+      <div class="spacer"></div>
+      <button class="btn" id="dReport">Monthly report (PDF)</button>
+      <button class="btn primary" id="dNew">+ New order</button>
+    </div>
+
+    <section class="hero">
+      <div>
+        <div class="lbl">Business value — cash plus stock</div>
+        <div class="hero-num">${money(M.worth)}</div>
+        <div class="lbl">${M.capital?`${pct}% of the ${money(M.capital)} the partners put in`:"Add the partners’ capital in Capital & partners"}</div>
+        <div class="meta">
+          <div>Cash balance<b>${money(M.cash)}</b></div>
+          <div>Stock at cost<b>${money(M.stockValue)}</b></div>
+          <div>Profit so far<b style="color:${M.netProfit<0?"#ff8a7d":"#5fd394"}">${money(M.netProfit)}</b></div>
+        </div>
+        ${M.netProfit<0 && perCoat>0 ? `<div class="note">About <b>${Math.ceil(-M.netProfit/perCoat)} more raincoats</b> delivered (${money(perCoat)} profit each) will cover everything spent so far.</div>`:(M.netProfit>=0&&M.capital?`<div class="note"><b>All costs are covered.</b> Every raincoat now adds ${money(perCoat)} profit.</div>`:"")}
+      </div>
+      <div class="gauge">${gaugeSVG(pct)}<div class="pct"><b>${pct}%</b><span>of capital back in the business</span></div></div>
+    </section>
+
+    ${rem.length?`<div class="remind"><h3>Needs attention <span class="muted">(${rem.length})</span></h3><div class="tablewrap"><table><tbody>
+      ${rem.map(x=>`<tr><td><b>${orderNo(x.o)}</b></td><td>${esc(x.o.customer)}</td><td>${esc(x.o.phone)}</td><td class="muted">${x.why}</td>
+      <td class="actions-cell"><button class="btn sm wa" data-wa="${x.o.id}">${ICON_WA}<span class="wa-t">WhatsApp</span></button> <select class="status s-${x.o.status}" data-st="${x.o.id}">${STATUSES.map(s=>`<option ${s===x.o.status?"selected":""}>${s}</option>`).join("")}</select></td></tr>`).join("")}
+    </tbody></table></div></div>`:""}
+    ${alerts.map(x=>`<div class="alert ${x.s.status==="Out of stock"?"red":""}"><b>${esc(x.p.name)}</b> — ${x.s.status.toLowerCase()}: ${x.s.available} left. Add stock from the Stock page.</div>`).join("")}
+
+    <div class="row" style="margin-top:26px"><div class="section-title" style="margin:0">Sales<span>${monthName(ym)}</span></div><div class="spacer"></div>
+      <input type="month" id="dm" value="${ym}" style="width:170px" aria-label="Month">
+      <div class="seg"><button id="dmThis" class="${ym===thisMonth()?"on":""}">This month</button><button id="dmAll" class="${!ym?"on":""}">All time</button></div>
+    </div>
+    <div class="stats">
+      <div class="stat accent"><div class="k">Orders</div><div class="v">${live.length}</div><div class="s">${delivered.length} delivered · ${returned.length} returned</div></div>
+      <div class="stat"><div class="k">Sales (delivered)</div><div class="v">${money(sales)}</div><div class="s">${pending.length} pending worth ${money(pipeline)}</div></div>
+      <div class="stat ${net<0?"neg":"pos"}"><div class="k">Net profit</div><div class="v">${money(net)}</div><div class="s">after ${money(exps)} expenses</div></div>
+      <div class="stat"><div class="k">COD to collect</div><div class="v">${money(codDue)}</div><div class="s">${dispatched.length} parcel(s) on the way</div></div>
+    </div>
+
+    <div class="two-1">
+      <div class="panel">
+        <div class="row" style="margin-bottom:6px"><h3 style="margin:0" class="claude-mark"><i></i>Weekly summary by Claude</h3><div class="spacer"></div>
+          <button class="btn sm" id="dSum">${sum?"Refresh":"Get this week’s summary"}</button></div>
+        ${sum?`<div class="hint" style="margin:0 0 10px">Written ${esc(sum.date)}</div><div class="summary" id="sumText">${esc(sum.text)}</div>`:`<div class="empty" id="sumText"><b>Ask Claude how the week went</b>A short summary in Sinhala of sales, stock and what to do next.</div>`}
+      </div>
+      <div class="panel"><h3>Stock</h3>
+        <div class="hero-num display" style="font-size:34px;margin:0">${run.avail}</div>
+        <div class="muted">raincoats in hand</div>
+        <div class="hint" style="margin-top:12px">${run.days==null?"Selling speed shows up after the first orders.":`Selling about ${run.perDay.toFixed(1)} a day — stock lasts about <b style="color:var(--ink)">${run.days} days</b>.`}</div>
+        <h3 style="margin-top:22px">Where orders come from <span class="muted">${monthName(ym)}</span></h3>
+        ${topDist.length?topDist.map(([k,v])=>`<div class="barline" style="margin:8px 0"><span style="width:110px">${esc(k)}</span><div class="b"><div style="width:${Math.round(v/maxD*100)}%"></div></div><span class="muted" style="width:28px;text-align:right">${v}</span></div>`).join(""):`<div class="muted">No orders yet.</div>`}
+      </div>
+    </div>
+
+    <div class="panel"><div class="row" style="margin-bottom:8px"><h3 style="margin:0">Latest orders</h3><div class="spacer"></div><button class="btn sm" id="dAll">See all orders</button></div>${ordersTable(recent,true)}</div>
+  `;
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{ const f=$("#gFill"); if(f) f.style.strokeDashoffset = 100-Math.max(0,Math.min(100,pct)); }));
+  $("#dm").onchange = e=>{ state.dashMonth = e.target.value; render(); };
+  $("#dmThis").onclick = ()=>{ state.dashMonth = thisMonth(); render(); };
+  $("#dmAll").onclick = ()=>{ state.dashMonth = ""; render(); };
+  $("#dNew").onclick = ()=>openOrder();
+  $("#dAll").onclick = ()=>{ page="orders"; render(); };
+  $("#dReport").onclick = ()=>monthlyReport(state.dashMonth||thisMonth());
+  $("#dSum").onclick = weeklySummary;
+  bindOrderRows();
+}
+
+/* ================= ORDERS ================= */
+function ordersTable(list, compact){
+  if(!list.length) return `<div class="empty"><b>No orders yet</b>Click “+ New order”, or press Ctrl+V with an order screenshot.</div>`;
+  return `<div class="tablewrap"><table><thead><tr>
+    <th>Order</th><th>Customer</th>${compact?"":"<th>Place</th>"}<th class="num">Qty</th><th class="num">Total</th><th>Status</th>${compact?"":"<th>Tracking</th>"}<th></th>
+  </tr></thead><tbody>
+  ${list.map(o=>{ const c=orderCalc(o); return `<tr>
+    <td style="white-space:nowrap"><b>${orderNo(o)}</b><div class="cell2">${esc(o.date)}</div></td>
+    <td><span class="cell1">${esc(o.customer)}</span><div class="cell2">${esc(o.phone)}</div></td>
+    ${compact?"":`<td><span class="cell1">${esc(o.city)||"—"}</span><div class="cell2">${esc(o.district)}</div></td>`}
+    <td class="num">${c.qty}</td><td class="num">${money(c.total)}<div class="cell2">${esc(o.payment)}</div></td>
+    <td><select class="status s-${o.status}" data-st="${o.id}">${STATUSES.map(s=>`<option ${s===o.status?"selected":""}>${s}</option>`).join("")}</select></td>
+    ${compact?"":`<td style="white-space:nowrap">${o.tracking?esc(o.tracking):'<span class="muted">—</span>'}</td>`}
+    <td class="actions-cell">
+      <button class="btn sm wa" data-wa="${o.id}" title="Send a WhatsApp message">${ICON_WA}<span class="wa-t">WhatsApp</span></button>
+      <button class="btn sm" data-edit="${o.id}">Edit</button>
+      <button class="btn sm more" data-more="${o.id}" title="Invoice, label, delete" aria-label="More actions">${ICON_MORE}</button>
+    </td></tr>`; }).join("")}
+  </tbody></table></div>`;
+}
+function deleteOrder(id){
+  const o=DB.orders.find(x=>x.id===id); if(!o) return;
+  if(confirm("Delete order "+orderNo(o)+" for "+o.customer+"? This cannot be undone.\n(Tip: to cancel an order, set status to Cancelled instead.)")){
+    DB.orders=DB.orders.filter(x=>x.id!==o.id); saveDB(); toast("Order deleted"); render();
+  }
+}
+function popMenu(btn, html, onPick){
+  closeMenus();
+  const m=document.createElement("div"); m.className="menu"; m.innerHTML=html; document.body.appendChild(m); _menuAt=Date.now();
+  const r=btn.getBoundingClientRect(); const w=m.offsetWidth, h=m.offsetHeight;
+  m.style.left=Math.max(8,Math.min(window.innerWidth-w-8, r.right-w))+"px";
+  m.style.top=(r.bottom+6+h>window.innerHeight ? Math.max(8,r.top-h-6) : r.bottom+6)+"px";
+  m.addEventListener("click",e=>{ e.stopPropagation(); const b=e.target.closest("[data-a]"); if(!b) return; closeMenus(); onPick(b.dataset.a); });
+  return m;
+}
+function bindOrderRows(){
+  document.querySelectorAll("[data-st]").forEach(s=>s.onchange=e=>{
+    const o=DB.orders.find(x=>x.id===s.dataset.st); o.status=e.target.value;
+    if(o.status==="Delivered" && !o.deliveredDate) o.deliveredDate=today();
+    if(o.status==="Dispatched") o.dispatchedDate=today();
+    saveDB(); toast(orderNo(o)+" → "+o.status); render();
+  });
+  document.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>openOrder(b.dataset.edit));
+  document.querySelectorAll("[data-wa]").forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); waMenu(b, b.dataset.wa); });
+  document.querySelectorAll("[data-more]").forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); const id=b.dataset.more;
+    popMenu(b, `<button data-a="inv">Print invoice</button><button data-a="lbl">Print parcel label</button><button data-a="del" style="color:var(--red)">Delete order</button>`, a=>{
+      if(a==="inv") printInvoice(id); if(a==="lbl") printLabel(id); if(a==="del") deleteOrder(id); }); });
+}
+function renderOrders(){
+  const q = state.orderSearch.toLowerCase();
+  let list = [...DB.orders].sort((a,b)=>b.no-a.no);
+  if(state.orderStatus) list = list.filter(o=>o.status===state.orderStatus);
+  if(state.orderMonth) list = list.filter(o=>(o.date||"").slice(0,7)===state.orderMonth);
+  if(q) list = list.filter(o=>[orderNo(o),o.customer,o.phone,o.whatsapp,o.city,o.district,o.address,o.tracking].join(" ").toLowerCase().includes(q));
+  const counts = STATUSES.map(s=>`${s}: ${DB.orders.filter(o=>o.status===s).length}`).join(" · ");
+  $("#main").innerHTML = `
+    <div class="row"><div><h1>Orders</h1><p class="sub">${counts}</p></div><div class="spacer"></div>
+      <button class="btn" id="csv">Export CSV</button>
+      <button class="btn primary" id="oNew">+ New order</button></div>
+    <div class="panel">
+      <div class="row" style="margin-bottom:12px">
+        <input id="oq" placeholder="Search name, phone, city, order no, tracking…" value="${esc(state.orderSearch)}" style="max-width:340px">
+        <select id="os" style="width:170px"><option value="">All statuses</option>${STATUSES.map(s=>`<option ${s===state.orderStatus?"selected":""}>${s}</option>`).join("")}</select>
+        <input type="month" id="om" value="${state.orderMonth}" style="width:170px">
+        ${state.orderMonth?`<button class="btn sm" id="omClear">All months</button>`:""}
+        <span class="muted">${list.length} order(s)</span>
+      </div>
+      ${ordersTable(list,false)}
+    </div>`;
+  $("#oq").oninput=e=>{ state.orderSearch=e.target.value; renderOrders(); const n=$("#oq"); n.focus(); n.setSelectionRange(n.value.length,n.value.length); };
+  $("#os").onchange=e=>{ state.orderStatus=e.target.value; render(); };
+  $("#om").onchange=e=>{ state.orderMonth=e.target.value; render(); };
+  if($("#omClear")) $("#omClear").onclick=()=>{ state.orderMonth=""; render(); };
+  $("#oNew").onclick=()=>openOrder();
+  $("#csv").onclick=exportOrdersCSV;
+  bindOrderRows();
+}
+
+let modalKind = null;
+function openOrder(id, prefill, imageFile, onSaved){
+  const o = id ? DB.orders.find(x=>x.id===id) : null;
+  const prods = DB.products.filter(p=>p.active!==false || (o && p.id===o.productId));
+  const p0 = o ? product(o.productId) : prods[0];
+  const v = o || Object.assign({ date:today(), customer:"", phone:"", address:"", city:"", district:"", productId:p0?p0.id:"", qty:1, price:p0?p0.price:0, discount:0,
+    delivery:deliveryCharge(num(p0&&p0.weightKg||1)), courierCost:courierCharge(num(p0&&p0.weightKg||1)), payment:"COD", status:"New", tracking:"", notes:"" }, prefill||{});
+  const kgOf=(pid,q)=>itemsWeight([{productId:pid,qty:q}]);
+  let autoDel = !o || (num(o.delivery)===deliveryCharge(kgOf(o.productId,num(o.qty)||1)) && num(o.courierCost)===courierCharge(kgOf(o.productId,num(o.qty)||1)));
+  modalKind = "order";
+  $("#modal").innerHTML = `
+    <h2>${o?"Edit order "+orderNo(o):"New order"}</h2>
+    <div class="drop" id="drop">
+      <img id="shot" style="display:none">
+      <div class="t" id="dropText"><b>Add from a screenshot</b>Press Ctrl+V with the customer’s message screenshot, or drop the image here. Claude fills in the name, phone and address.</div>
+      <button class="btn sm" id="pickImg">Choose image</button>
+      <input type="file" id="imgFile" accept="image/*" style="display:none">
+    </div>
+    <div class="grid2">
+      <div><label>Date</label><input type="date" id="f_date" value="${esc(v.date)}"></div>
+      <div><label>Status</label><select id="f_status">${STATUSES.map(s=>`<option ${s===v.status?"selected":""}>${s}</option>`).join("")}</select></div>
+      <div><label>Customer name *</label><input id="f_customer" value="${esc(v.customer)}"></div>
+      <div><label>Delivery phone *</label><input id="f_phone" value="${esc(v.phone)}" placeholder="07XXXXXXXX"><div class="hint" id="custHint"></div></div>
+      <div><label>WhatsApp number — the number they message us from</label><input id="f_whatsapp" value="${esc(v.whatsapp||"")}" placeholder="Same as delivery phone if empty"></div>
+      <div class="full"><label>Address</label><textarea id="f_address" rows="2">${esc(v.address)}</textarea></div>
+      <div><label>City / town</label><input id="f_city" value="${esc(v.city)}"></div>
+      <div><label>District</label><select id="f_district"><option value="">—</option>${DISTRICTS.map(d=>`<option ${d===v.district?"selected":""}>${d}</option>`).join("")}</select></div>
+    </div>
+    <div class="grid3" style="margin-top:12px">
+      <div><label>Product</label><select id="f_product">${prods.map(p=>`<option value="${p.id}" ${p.id===v.productId?"selected":""}>${esc(p.name)} — ${stockOf(p).available} left</option>`).join("")}</select></div>
+      <div><label>Qty</label><input type="number" min="1" id="f_qty" value="${esc(v.qty)}"></div>
+      <div><label>Unit price (Rs.)</label><input type="number" id="f_price" value="${esc(v.price)}"></div>
+      <div><label>Discount (Rs.)</label><input type="number" id="f_discount" value="${esc(v.discount)}"><div class="hint" id="bulkHint"></div></div>
+      <div><label>Delivery — customer pays (Rs.)</label><input type="number" id="f_delivery" value="${esc(v.delivery)}"><div class="hint" id="delHint"></div></div>
+      <div><label>Courier cost — we pay (Rs.)</label><input type="number" id="f_courier" value="${esc(v.courierCost)}"></div>
+      <div><label>Payment</label><select id="f_payment">${PAYMENTS.map(s=>`<option ${s===v.payment?"selected":""}>${s}</option>`).join("")}</select></div>
+      <div><label>${esc(DB.settings.courier)} tracking no</label><input id="f_tracking" value="${esc(v.tracking)}"></div>
+      <div><label>Notes</label><input id="f_notes" value="${esc(v.notes)}"></div>
+    </div>
+    <div class="totalbox" style="margin-top:14px" id="f_total"></div>
+    <div id="f_warn" class="hint"></div>
+    <div class="actions"><button class="btn" id="f_cancel">Cancel</button><button class="btn primary" id="f_save">${o?"Save changes":"Add order"}</button></div>`;
+  openModalBg();
+  const read = ()=>({
+    date:$("#f_date").value||today(), status:$("#f_status").value, customer:$("#f_customer").value.trim(), phone:$("#f_phone").value.trim(), whatsapp:$("#f_whatsapp").value.trim(),
+    address:$("#f_address").value.trim(), city:$("#f_city").value.trim(), district:$("#f_district").value, payment:$("#f_payment").value, productId:$("#f_product").value,
+    qty:Math.max(1,parseInt($("#f_qty").value)||1), price:num($("#f_price").value), discount:num($("#f_discount").value),
+    delivery:num($("#f_delivery").value), courierCost:num($("#f_courier").value), tracking:$("#f_tracking").value.trim(), notes:$("#f_notes").value.trim()
+  });
+  const upd = ()=>{
+    const d = read(); const c = orderCalc(d);
+    $("#f_total").innerHTML = `<span>Customer pays: <b>${money(c.total)}</b></span><span>Product cost: ${money(c.productCost)}</span><span>Profit on this order: <b>${money(c.profit)}</b></span>`;
+    const p = product(d.productId); let warn="";
+    if(p){ const s=stockOf(p); const already = (o && o.productId===p.id && countsTowardStock(o)) ? (num(o.qty)||1) : 0;
+      if(countsTowardStock(d) && d.qty > s.available + already) warn = "Not enough stock: only "+(s.available+already)+" available."; }
+    $("#f_warn").textContent = warn; $("#f_warn").style.color = warn?"var(--red)":"";
+    // weight-based delivery
+    const kg=kgOf(d.productId,d.qty);
+    if(autoDel){ const dv=deliveryCharge(kg), cv=courierCharge(kg); if(num($("#f_delivery").value)!==dv) $("#f_delivery").value=dv; if(num($("#f_courier").value)!==cv) $("#f_courier").value=cv; }
+    $("#delHint").innerHTML = autoDel ? `${kg} kg — worked out by weight` : `<a href="#" id="delAuto">Work out by weight (${kg} kg)</a>`;
+    const da=$("#delAuto"); if(da) da.onclick=(e)=>{ e.preventDefault(); autoDel=true; upd(); };
+    // bulk discount
+    const off=bulkOffPerUnit(d.qty), bulk=off*d.qty;
+    $("#bulkHint").innerHTML = off && num(d.discount)!==bulk ? `<a href="#" id="bulkApply">Apply bulk discount: ${money(off)} × ${d.qty} = ${money(bulk)}</a>` : (off?`Bulk discount ${money(off)} × ${d.qty}`:"");
+    const ba=$("#bulkApply"); if(ba) ba.onclick=(e)=>{ e.preventDefault(); $("#f_discount").value=bulk; upd(); };
+    // returning customer?
+    const cu = findCustomerByPhone(d.phone); const h=$("#custHint");
+    if(cu && !(o && cu.orders===1 && normPhone(o.phone)===cu.key)){
+      h.innerHTML = `Returning customer: ${cu.orders} order(s)${cu.returned?` <span class="badge">${cu.returned} returned</span>`:""}${cu.delivered?` <span class="badge good">${cu.delivered} delivered</span>`:""}`+
+        (!d.address && cu.address ? ` · <a href="#" id="useCust">use saved address</a>`:"");
+      const u=$("#useCust"); if(u) u.onclick=(e)=>{ e.preventDefault(); $("#f_customer").value=$("#f_customer").value||cu.name; $("#f_address").value=cu.address||""; $("#f_city").value=cu.city||""; $("#f_district").value=cu.district||""; upd(); };
+    } else h.textContent="";
+  };
+  $("#f_product").onchange = ()=>{ const p=product($("#f_product").value); if(p) $("#f_price").value=p.price; upd(); };
+  ["#f_delivery","#f_courier"].forEach(id=>$(id).addEventListener("input",()=>{ autoDel=false; }));
+  $("#modal").querySelectorAll("input,select,textarea").forEach(el=>el.addEventListener("input",upd));
+  upd();
+  // screenshot handling
+  const drop=$("#drop");
+  $("#pickImg").onclick=()=>$("#imgFile").click();
+  $("#imgFile").onchange=e=>{ if(e.target.files[0]) readScreenshot(e.target.files[0], upd); };
+  drop.addEventListener("dragover",e=>{ e.preventDefault(); drop.classList.add("over"); });
+  drop.addEventListener("dragleave",()=>drop.classList.remove("over"));
+  drop.addEventListener("drop",e=>{ e.preventDefault(); drop.classList.remove("over"); const f=[...e.dataTransfer.files].find(f=>f.type.startsWith("image/")); if(f) readScreenshot(f, upd); });
+  $("#f_cancel").onclick = closeModal;
+  $("#f_save").onclick = async ()=>{
+    const d = read();
+    if(!d.customer || !d.phone){ alert("Please enter the customer name and phone number."); return; }
+    if(o){ Object.assign(o,d); toast("Order "+orderNo(o)+" updated"); }
+    else {
+      $("#f_save").disabled=true;
+      const p = product(d.productId);
+      const no = await nextNumber("order");
+      const nord={ id:uid(), no, created:new Date().toISOString(), unitCost:p?num(p.cost):0, ...d };
+      DB.orders.push(nord);
+      if(onSaved) onSaved(nord);
+      toast("Order CL-"+String(no).padStart(4,"0")+" added");
+    }
+    saveDB(); closeModal(); render();
+  };
+  if(imageFile) readScreenshot(imageFile, upd); else setTimeout(()=>$("#f_customer").focus(),50);
+}
+let _closeT=null;
+function openModalBg(){ clearTimeout(_closeT); $("#modalBg").classList.add("open"); }
+function closeModal(){ $("#modalBg").classList.remove("open"); modalKind=null; clearTimeout(_closeT); _closeT=setTimeout(()=>{ if(!$("#modalBg").classList.contains("open")) $("#modal").innerHTML=""; },260); }
+$("#modalBg").addEventListener("mousedown", e=>{ if(e.target.id==="modalBg") closeModal(); });
+document.addEventListener("keydown", e=>{ if(e.key==="Escape") closeModal(); });
+
+// Ctrl+V with an image anywhere: open a new order (or fill the open one)
+document.addEventListener("paste", e=>{
+  const item=[...(e.clipboardData?e.clipboardData.items:[])].find(i=>i.type.startsWith("image/"));
+  if(!item) return;
+  const file=item.getAsFile(); e.preventDefault();
+  if(modalKind==="order") readScreenshot(file, ()=>$("#f_customer")&&$("#f_customer").dispatchEvent(new Event("input")));
+  else if(!modalKind) openOrder(null, null, file);
+});
+
+/* ================= CLAUDE: read an order screenshot ================= */
+const EXTRACT_PROMPT = `This is a screenshot of a customer's order message for CoverLanka, a raincoat shop in Sri Lanka (from Facebook Messenger, WhatsApp, a comment or similar).
+Extract the customer's delivery details. The text may be in Sinhala, English or Singlish.
+Reply with ONLY one JSON object, no other text, with these keys:
+{"name":"","phone":"","phone2":"","chat_number":"","address":"","city":"","district":"","qty":1,"notes":""}
+Rules:
+- name: the customer's name as given for delivery.
+- phone: the delivery / contact phone number the customer typed for the parcel. phone2: a second number they typed, if any. Sri Lankan numbers in 07XXXXXXXX format (convert +94 to 0).
+- chat_number: the WhatsApp number the customer is messaging FROM — usually shown at the top of a WhatsApp chat (the chat title or "~ +94 ..." beside their messages) when their number is not saved, or a number the customer says is their WhatsApp number (e.g. "WhatsApp 077..."). Format 07XXXXXXXX. "" if not visible. It may be different from phone.
+- address: the full delivery address in English letters, for the courier label. Transliterate Sinhala (e.g. මාතර → Matara, පාර → Road). Do not include the city twice.
+- city: the town or city, in English letters.
+- district: one of the 25 districts of Sri Lanka in English (e.g. Matara, Galle, Colombo, Gampaha, Kandy, Kurunegala), worked out from the address if it is clear, else "".
+- qty: how many raincoats are ordered (1 if not said).
+- notes: size, colour or other special requests, else "".
+- Use "" for anything that is not in the image. Never invent details.`;
+
+async function imageToJpegBase64(file){
+  const url = URL.createObjectURL(file);
+  const img = await new Promise((res,rej)=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=rej; i.src=url; });
+  const max=1600; let w=img.naturalWidth, h=img.naturalHeight; const s=Math.min(1, max/Math.max(w,h)); w=Math.round(w*s); h=Math.round(h*s);
+  const c=document.createElement("canvas"); c.width=w; c.height=h; const ctx=c.getContext("2d"); ctx.fillStyle="#fff"; ctx.fillRect(0,0,w,h); ctx.drawImage(img,0,0,w,h);
+  URL.revokeObjectURL(url);
+  const dataUrl=c.toDataURL("image/jpeg",0.88);
+  return { dataUrl, base64: dataUrl.split(",")[1], mediaType:"image/jpeg" };
+}
+async function callClaudeRaw(content, maxTokens){
+  const key=(DB.settings.claudeKey||"").trim(); const model=DB.settings.claudeModel||DEFAULT_MODEL;
+  if(!key) throw new Error("NO_KEY");
+  if(window.desktop && window.desktop.claude){
+    const r = await window.desktop.claude({ apiKey:key, model, content, maxTokens:maxTokens||1024 });
+    if(r.error) throw new Error(r.error); return r.text;
+  }
+  const r = await fetch("https://api.anthropic.com/v1/messages",{ method:"POST", headers:{ "x-api-key":key, "anthropic-version":"2023-06-01", "content-type":"application/json", "anthropic-dangerous-direct-browser-access":"true" },
+    body: JSON.stringify({ model, max_tokens:maxTokens||1024, messages:[{ role:"user", content }] }) });
+  const j = await r.json(); if(!r.ok) throw new Error((j.error&&j.error.message)||("HTTP "+r.status));
+  return j.content.filter(c=>c.type==="text").map(c=>c.text).join("");
+}
+async function callClaude(base64, mediaType){
+  if(window.__mockClaude) return window.__mockClaude(base64);
+  return callClaudeRaw([{type:"image",source:{type:"base64",media_type:mediaType,data:base64}},{type:"text",text:EXTRACT_PROMPT}], 1024);
+}
+async function readScreenshot(file, after){
+  const shot=$("#shot"), txt=$("#dropText"); if(!shot) return;
+  let img;
+  try{ img = await imageToJpegBase64(file); }catch(e){ txt.innerHTML="<b>Could not open that image.</b>Try another screenshot."; return; }
+  shot.src=img.dataUrl; shot.style.display="block";
+  txt.innerHTML=`<b><span class="spin"></span>Claude is reading the screenshot…</b>This takes a few seconds (needs internet).`;
+  try{
+    const text = await callClaude(img.base64, img.mediaType);
+    const m = text.match(/\{[\s\S]*\}/); if(!m) throw new Error("Claude did not return the details");
+    const d = JSON.parse(m[0]);
+    const filled=[];
+    const set=(id,val)=>{ const el=$(id); if(el && val!=null && String(val).trim()!==""){ el.value=String(val).trim(); el.classList.add("filled"); filled.push(id); } };
+    set("#f_customer", d.name);
+    set("#f_phone", d.phone ? (normPhone(d.phone).length===10?normPhone(d.phone):d.phone) : "");
+    const cn = d.chat_number ? (normPhone(d.chat_number).length===10?normPhone(d.chat_number):d.chat_number) : "";
+    if(cn && normPhone(cn)!==normPhone(d.phone)) set("#f_whatsapp", cn);
+    set("#f_address", d.address);
+    set("#f_city", d.city);
+    if(d.district){ const match=DISTRICTS.find(x=>x.toLowerCase()===String(d.district).toLowerCase().trim()); if(match) set("#f_district", match); }
+    if(num(d.qty)>1) set("#f_qty", parseInt(d.qty));
+    const notes=[d.notes, (d.phone2 && normPhone(d.phone2)!==normPhone(cn))?("2nd phone: "+d.phone2):""].filter(x=>x&&String(x).trim()).join(" · ");
+    if(notes) set("#f_notes", notes);
+    txt.innerHTML = filled.length ? `<b>Filled ${filled.length} field(s) from the screenshot</b>Check the highlighted fields, then click “Add order”.` : `<b>No delivery details found in this image.</b>Please type them in.`;
+    if(after) after();
+  }catch(e){
+    if(e.message==="NO_KEY") txt.innerHTML=`<b>Claude is not connected yet.</b>Add your Claude API key in Settings & Backup → Claude, then try again. You can still type the details.`;
+    else txt.innerHTML=`<b>Claude could not read it.</b>${esc(e.message)}. Check the internet connection, or type the details.`;
+  }
+}
+
+/* ================= CUSTOMERS ================= */
+function renderCustomers(){
+  const q=state.custSearch.toLowerCase();
+  let list=customers().sort((a,b)=>(b.last||"").localeCompare(a.last||""));
+  if(q) list=list.filter(c=>[c.name,c.phone,c.city,c.district,c.address].join(" ").toLowerCase().includes(q));
+  const all=customers(); const repeat=all.filter(c=>c.orders>1).length; const bad=all.filter(c=>c.returned>0).length;
+  $("#main").innerHTML=`
+    <div class="row"><div><h1>Customers</h1><p class="sub">Collected automatically from every order. ${all.length} customer(s) · ${repeat} came back again · ${bad} with a returned parcel</p></div>
+      <div class="spacer"></div><button class="btn" id="cCsv">Export customers (CSV)</button></div>
+    <div class="panel">
+      <div class="row" style="margin-bottom:12px"><input id="cq" placeholder="Search name, phone, city, district…" value="${esc(state.custSearch)}" style="max-width:340px"><span class="muted">${list.length} shown</span></div>
+      ${list.length?`<table><thead><tr><th>Name</th><th>Phone</th><th>Address</th><th>City</th><th>District</th><th class="num">Orders</th><th class="num">Spent</th><th>Last order</th><th></th></tr></thead><tbody>
+      ${list.map(c=>`<tr><td><b>${esc(c.name)}</b>${c.returned?`<span class="badge">${c.returned} returned</span>`:""}${c.orders>1&&!c.returned?`<span class="badge good">repeat</span>`:""}</td>
+        <td>${esc(c.phone)}${c.whatsapp&&normPhone(c.whatsapp)!==normPhone(c.phone)?`<div class="hint" style="margin:2px 0 0">WhatsApp ${esc(c.whatsapp)}</div>`:""}</td><td>${esc(c.address)}</td><td>${esc(c.city)}</td><td>${esc(c.district)}</td><td class="num">${c.orders}</td><td class="num">${money(c.spent)}</td><td style="white-space:nowrap">${esc(c.last)}</td>
+        <td class="actions-cell"><button class="btn sm" data-cnew="${esc(c.key)}">New order</button> <button class="btn sm" data-cview="${esc(c.key)}">Orders</button></td></tr>`).join("")}
+      </tbody></table>`:`<div class="empty">No customers yet — they appear here when you add orders.</div>`}
+    </div>`;
+  $("#cq").oninput=e=>{ state.custSearch=e.target.value; renderCustomers(); const n=$("#cq"); n.focus(); n.setSelectionRange(n.value.length,n.value.length); };
+  $("#cCsv").onclick=exportCustomersCSV;
+  document.querySelectorAll("[data-cnew]").forEach(b=>b.onclick=()=>{ const c=customers().find(x=>x.key===b.dataset.cnew); openOrder(null,{customer:c.name,phone:c.phone,whatsapp:c.whatsapp||"",address:c.address,city:c.city,district:c.district||""}); });
+  document.querySelectorAll("[data-cview]").forEach(b=>b.onclick=()=>{ const c=customers().find(x=>x.key===b.dataset.cview); state.orderSearch=c.phone||c.name; state.orderStatus=""; state.orderMonth=""; page="orders"; render(); });
+}
+
+/* ================= PRINT ================= */
+function doPrint(html){
+  $("#printArea").innerHTML = html;
+  const imgs=[...$("#printArea").querySelectorAll("img")];
+  Promise.all(imgs.map(i=>i.complete?1:new Promise(r=>{i.onload=i.onerror=r;}))).then(()=>setTimeout(()=>{ if(window.desktop && window.desktop.print) window.desktop.print(); else window.print(); },60));
+}
+function printInvoice(id){
+  const o=DB.orders.find(x=>x.id===id); const p=product(o.productId); const c=orderCalc(o); const S=DB.settings;
+  doPrint(`<div class="inv">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div><img src="logo.png" style="height:64px"><div style="margin-top:6px">${esc(S.address)}</div><div>${esc(S.phone)}</div></div>
+      <div style="text-align:right"><div style="font-size:22px;font-weight:700;color:#fe5f03">INVOICE</div><div><b>${orderNo(o)}</b></div><div>Date: ${esc(o.date)}</div></div>
+    </div>
+    <hr style="margin:16px 0;border:none;border-top:3px solid #fe5f03">
+    <div><b>Bill to:</b> ${esc(o.customer)}<br>${esc(o.address)}${o.city?", "+esc(o.city):""}<br>${esc(o.phone)}</div>
+    <table style="margin-top:16px;width:100%;border-collapse:collapse">
+      <tr><th style="text-align:left">Item</th><th style="text-align:right">Qty</th><th style="text-align:right">Unit price</th><th style="text-align:right">Amount</th></tr>
+      <tr><td>${esc(p?p.name:"Item")}</td><td style="text-align:right">${c.qty}</td><td style="text-align:right">${money(o.price)}</td><td style="text-align:right">${money(c.subtotal)}</td></tr>
+      ${num(o.discount)?`<tr><td colspan="3">Discount</td><td style="text-align:right">-${money(o.discount)}</td></tr>`:""}
+      <tr><td colspan="3">Delivery charge</td><td style="text-align:right">${money(o.delivery)}</td></tr>
+      <tr class="tot"><td colspan="3">TOTAL</td><td style="text-align:right">${money(c.total)}</td></tr>
+    </table>
+    <p>Payment: <b>${esc(o.payment)}</b>${o.payment==="COD"?" — please pay "+money(c.total)+" on delivery":""}</p>
+    ${o.tracking?`<p>${esc(S.courier)} tracking no: <b>${esc(o.tracking)}</b></p>`:""}
+    <p style="margin-top:30px">Thank you for shopping with ${esc(S.businessName)}!</p>
+  </div>`);
+}
+function printLabel(id){
+  const o=DB.orders.find(x=>x.id===id); const c=orderCalc(o); const S=DB.settings;
+  doPrint(`<div class="label">
+    <div style="font-size:12px">TO:</div>
+    <div class="big">${esc(o.customer)}</div>
+    <div>${esc(o.address)}</div><div><b>${esc(o.city)}${o.district?", "+esc(o.district):""}</b></div><div>Tel: ${esc(o.phone)}</div>
+    <hr>
+    <div>${o.payment==="COD"?`<span class="big">COD: ${money(c.total)}</span>`:"<b>PAID — Bank transfer</b>"}</div>
+    <div>Order: ${orderNo(o)} ${o.tracking?" · "+esc(S.courier)+": "+esc(o.tracking):""}</div>
+    <hr>
+    <div style="display:flex;align-items:center;gap:10px;font-size:12px"><img src="logo.png" style="height:30px"><div>FROM: <b>${esc(S.businessName)}</b> ${esc(S.phone)}<br>${esc(S.address)}</div></div>
+  </div>`);
+}
+
+/* ================= QUOTATIONS ================= */
+const QUOTE_STATUSES = ["Draft","Sent","Accepted","Declined","Expired"];
+const DEFAULT_QUOTE_TERMS = "Prices are valid until the date above.\nDelivery island-wide by courier. Cash on delivery or bank transfer.\nFor large orders, 50% advance may be needed to confirm.";
+function quoteNo(q){ return "QT-"+String(q.no).padStart(4,"0"); }
+function quoteCalc(q){
+  const items=(q.items||[]).map(it=>({ ...it, line: num(it.qty)*num(it.price) }));
+  const subtotal=items.reduce((a,it)=>a+it.line,0);
+  const total=subtotal-num(q.bulk)-num(q.discount)+num(q.delivery);
+  const qty=items.reduce((a,it)=>a+num(it.qty),0);
+  return { items, subtotal, total, qty };
+}
+function quoteStatus(q){ return (q.status!=="Accepted" && q.status!=="Declined" && q.validUntil && q.validUntil<today()) ? "Expired" : q.status; }
+function addDays(d,n){ const t=new Date(d); t.setDate(t.getDate()+n); return t.toISOString().slice(0,10); }
+
+function renderQuotes(){
+  const list=[...(DB.quotes||[])].sort((a,b)=>b.no-a.no);
+  const open=list.filter(q=>["Draft","Sent"].includes(quoteStatus(q)));
+  const won=list.filter(q=>q.status==="Accepted");
+  $("#main").innerHTML=`
+    <div class="row"><div><h1>Quotations</h1><p class="sub" style="margin:0">Price quotes for bulk or special orders — save as PDF, send on WhatsApp, and turn into an order when accepted.</p></div>
+      <div class="spacer"></div><button class="btn primary" id="qNew">+ New quotation</button></div>
+    <div class="cards" style="margin-top:20px">
+      <div class="card or"><div class="k">Open quotations</div><div class="v">${open.length}</div><div class="s">worth ${money(open.reduce((a,q)=>a+quoteCalc(q).total,0))}</div></div>
+      <div class="card"><div class="k">Accepted</div><div class="v">${won.length}</div><div class="s">${list.length?Math.round(won.length/list.length*100):0}% of all quotes</div></div>
+      <div class="card"><div class="k">All quotations</div><div class="v">${list.length}</div></div>
+    </div>
+    <div class="panel">${list.length?`<div class="tablewrap"><table><thead><tr><th>Quotation</th><th>Customer</th><th class="num">Items</th><th class="num">Total</th><th>Valid until</th><th>Status</th><th></th></tr></thead><tbody>
+      ${list.map(q=>{ const c=quoteCalc(q), st=quoteStatus(q); return `<tr>
+        <td style="white-space:nowrap"><b>${quoteNo(q)}</b><div class="cell2">${esc(q.date)}</div></td>
+        <td><span class="cell1">${esc(q.customer)}</span><div class="cell2">${esc(q.company||q.phone||"")}</div></td>
+        <td class="num">${c.qty}</td><td class="num">${money(c.total)}</td>
+        <td style="white-space:nowrap">${esc(q.validUntil||"—")}</td>
+        <td><select class="status q-${st}" data-qst="${q.id}">${QUOTE_STATUSES.map(s=>`<option ${s===st?"selected":""}>${s}</option>`).join("")}</select>${q.orderId?`<div class="cell2">→ ${esc(orderNo(DB.orders.find(o=>o.id===q.orderId)||{no:0}))}</div>`:""}</td>
+        <td class="actions-cell">
+          <button class="btn sm" data-qpdf="${q.id}">PDF</button>
+          <button class="btn sm wa" data-qwa="${q.id}" title="Send on WhatsApp">${ICON_WA}<span class="wa-t">WhatsApp</span></button>
+          <button class="btn sm" data-qedit="${q.id}">Edit</button>
+          <button class="btn sm more" data-qmore="${q.id}" aria-label="More actions">${ICON_MORE}</button>
+        </td></tr>`; }).join("")}
+    </tbody></table></div>`:`<div class="empty"><b>No quotations yet</b>When a customer asks for a price (for example 50 raincoats for a school or a company), click “+ New quotation”.</div>`}</div>`;
+  $("#qNew").onclick=()=>openQuote();
+  document.querySelectorAll("[data-qedit]").forEach(b=>b.onclick=()=>openQuote(b.dataset.qedit));
+  document.querySelectorAll("[data-qpdf]").forEach(b=>b.onclick=()=>quotePDF(b.dataset.qpdf));
+  document.querySelectorAll("[data-qwa]").forEach(b=>b.onclick=()=>quoteWhatsApp(b.dataset.qwa));
+  document.querySelectorAll("[data-qst]").forEach(s=>s.onchange=e=>{ const q=DB.quotes.find(x=>x.id===s.dataset.qst); q.status=e.target.value; if(q.status==="Expired") q.validUntil=q.validUntil||today(); if(q.status!=="Expired" && q.validUntil<today() && q.status!=="Accepted" && q.status!=="Declined") q.validUntil=addDays(today(),7); saveDB(); toast(quoteNo(q)+" → "+q.status); render(); });
+  document.querySelectorAll("[data-qmore]").forEach(b=>b.onclick=e=>{ e.stopPropagation(); const id=b.dataset.qmore; const q=DB.quotes.find(x=>x.id===id);
+    popMenu(b, `${q.orderId?"":`<button data-a="order" style="color:var(--brand-ink);font-weight:700">Accepted — make it an order</button>`}<button data-a="dup">Duplicate</button><button data-a="del" style="color:var(--red)">Delete quotation</button>`, a=>{
+      if(a==="order") quoteToOrder(id);
+      if(a==="dup"){ (async()=>{ const c=JSON.parse(JSON.stringify(q)); Object.assign(c,{id:uid(),no:await nextNumber("quote"),date:today(),validUntil:addDays(today(),14),status:"Draft",orderId:null}); DB.quotes.push(c); saveDB(); toast("Copied as "+quoteNo(c)); render(); })(); }
+      if(a==="del" && confirm("Delete quotation "+quoteNo(q)+"?")){ DB.quotes=DB.quotes.filter(x=>x.id!==id); saveDB(); toast("Quotation deleted"); render(); }
+    }); });
+}
+
+function openQuote(id){
+  const q = id ? DB.quotes.find(x=>x.id===id) : null;
+  const p0 = DB.products.find(p=>p.active!==false) || DB.products[0] || {};
+  const v = q ? JSON.parse(JSON.stringify(q)) : { date:today(), validUntil:addDays(today(),14), customer:"", company:"", phone:"", address:"", discount:0, delivery:0, status:"Draft",
+    items:[{ productId:p0.id||"", desc:p0.name||"Raincoat", qty:10, price:num(p0.price) }], terms:DEFAULT_QUOTE_TERMS, note:"" };
+  modalKind="quote";
+  $("#modal").innerHTML=`<h2>${q?"Edit quotation "+quoteNo(q):"New quotation"}</h2>
+    <div class="grid3">
+      <div><label for="q_date">Date</label><input type="date" id="q_date" value="${esc(v.date)}"></div>
+      <div><label for="q_valid">Valid until</label><input type="date" id="q_valid" value="${esc(v.validUntil)}"></div>
+      <div><label for="q_status">Status</label><select id="q_status">${QUOTE_STATUSES.map(s=>`<option ${s===v.status?"selected":""}>${s}</option>`).join("")}</select></div>
+      <div><label for="q_customer">Customer name *</label><input id="q_customer" value="${esc(v.customer)}"></div>
+      <div><label for="q_company">Company / school (optional)</label><input id="q_company" value="${esc(v.company)}"></div>
+      <div><label for="q_phone">Phone</label><input id="q_phone" value="${esc(v.phone)}" placeholder="07XXXXXXXX"></div>
+      <div class="full"><label for="q_address">Address</label><input id="q_address" value="${esc(v.address)}"></div>
+    </div>
+    <label style="margin-top:18px">Items</label>
+    <div class="tablewrap"><table id="q_items"><thead><tr><th style="width:45%">Description</th><th class="num">Qty</th><th class="num">Unit price (Rs.)</th><th class="num">Amount</th><th></th></tr></thead><tbody></tbody></table></div>
+    <div class="row" style="margin-top:8px"><button class="btn sm" id="q_add">+ Add item</button>
+      <span class="hint" style="margin:0" id="q_tierhint"></span></div>
+    <div class="grid3" style="margin-top:14px">
+      <div><label for="q_bulk">Bulk discount</label><input id="q_bulk" readonly tabindex="-1" style="background:var(--panel-2)">
+        <label style="display:flex;gap:7px;align-items:center;margin-top:7px;font-weight:600;color:var(--ink-2)"><input type="checkbox" id="q_bulkon" style="width:auto" ${v.bulkAuto===false?"":"checked"}> Apply bulk discount</label></div>
+      <div><label for="q_del">Delivery charge (Rs.)</label><input type="number" id="q_del" value="${esc(v.delivery)}">
+        <label style="display:flex;gap:7px;align-items:center;margin-top:7px;font-weight:600;color:var(--ink-2)"><input type="checkbox" id="q_delauto" style="width:auto" ${v.deliveryAuto===false?"":"checked"}> Work out by weight <span class="muted" id="q_kg" style="font-weight:500"></span></label></div>
+      <div><label for="q_disc">Extra discount (Rs.)</label><input type="number" id="q_disc" value="${esc(v.discount)}"></div>
+      <div class="full"><label for="q_note">Message to the customer (shown on the quotation)</label><input id="q_note" value="${esc(v.note)}" placeholder="e.g. Thank you for your interest in CoverLanka raincoats."></div>
+      <div class="full"><label for="q_terms">Terms</label><textarea id="q_terms" rows="3">${esc(v.terms)}</textarea></div>
+    </div>
+    <div class="totalbox" style="margin-top:14px" id="q_total"></div>
+    <div class="actions">${q?"":`<span class="hint" style="margin:0 auto 0 0">You can save it as a PDF from the list after saving.</span>`}<button class="btn" id="q_cancel">Cancel</button><button class="btn primary" id="q_save">${q?"Save changes":"Save quotation"}</button></div>`;
+  openModalBg();
+  const items=v.items;
+  const drawItems=()=>{
+    $("#q_items tbody").innerHTML=items.map((it,i)=>`<tr>
+      <td><input data-f="desc" data-i="${i}" value="${esc(it.desc)}" list="q_prod_list"></td>
+      <td class="num"><input type="number" min="1" data-f="qty" data-i="${i}" value="${esc(it.qty)}" style="width:80px;text-align:right"></td>
+      <td class="num"><input type="number" data-f="price" data-i="${i}" value="${esc(it.price)}" style="width:120px;text-align:right"></td>
+      <td class="num" id="q_line${i}">${money(num(it.qty)*num(it.price))}</td>
+      <td>${items.length>1?`<button class="btn sm danger" data-rm="${i}" aria-label="Remove item">✕</button>`:""}</td></tr>`).join("")+
+      `<datalist id="q_prod_list">${DB.products.map(p=>`<option value="${esc(p.name)}">`).join("")}</datalist>`;
+    $("#q_items").querySelectorAll("input").forEach(el=>el.oninput=()=>{ const it=items[+el.dataset.i]; it[el.dataset.f]= el.dataset.f==="desc"?el.value:num(el.value);
+      if(el.dataset.f==="desc"){ const p=DB.products.find(x=>x.name===el.value); if(p){ it.productId=p.id; } else it.productId=""; }
+      $("#q_line"+el.dataset.i).textContent=money(num(it.qty)*num(it.price)); upd(); });
+    $("#q_items").querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>{ items.splice(+b.dataset.rm,1); drawItems(); upd(); });
+  };
+  const read=()=>({ date:$("#q_date").value||today(), validUntil:$("#q_valid").value, status:$("#q_status").value, customer:$("#q_customer").value.trim(), company:$("#q_company").value.trim(),
+    phone:$("#q_phone").value.trim(), address:$("#q_address").value.trim(), discount:num($("#q_disc").value), delivery:num($("#q_del").value),
+    bulkAuto:$("#q_bulkon").checked, deliveryAuto:$("#q_delauto").checked, bulk:0, bulkOff:0, bulkQty:0,
+    note:$("#q_note").value.trim(), terms:$("#q_terms").value.trim(), items:items.filter(it=>String(it.desc).trim()&&num(it.qty)>0) });
+  const applyRules=(d)=>{
+    const coatQty=d.items.filter(it=>it.productId).reduce((a,it)=>a+num(it.qty),0);
+    const off=bulkOffPerUnit(coatQty);
+    d.bulkQty=coatQty; d.bulkOff=d.bulkAuto?off:0; d.bulk=d.bulkAuto?off*coatQty:0;
+    const kg=itemsWeight(d.items);
+    if(d.deliveryAuto){ d.delivery=deliveryCharge(kg); $("#q_del").value=d.delivery; }
+    $("#q_del").readOnly=d.deliveryAuto; $("#q_del").style.background=d.deliveryAuto?"var(--panel-2)":"";
+    $("#q_kg").textContent=kg?`(${kg} kg)`:"";
+    $("#q_bulk").value = d.bulk ? `${money(d.bulk)}  (${money(off)} × ${coatQty})` : (off&&!d.bulkAuto?"Off":"None");
+    const T=[...(pricing().tiers||[])].filter(t=>num(t.min)>0).sort((a,b)=>num(a.min)-num(b.min));
+    $("#q_tierhint").textContent = T.length ? "Bulk discount: "+T.map(t=>`${t.min}+ raincoats → ${money(t.off)} off each`).join(" · ") : "";
+    return d;
+  };
+  const upd=()=>{ const d=applyRules(read()), c=quoteCalc(d);
+    const cost=c.items.reduce((a,it)=>{ const p=it.productId?product(it.productId):null; return a+(p?num(p.cost)*num(it.qty):0); },0);
+    const courier=courierCharge(itemsWeight(d.items));
+    $("#q_total").innerHTML=`<span>Raincoats: <b>${d.bulkQty}</b></span><span>Total for customer: <b>${money(c.total)}</b></span>${cost?`<span>Profit after courier (${money(courier)}): <b>${money(c.total-cost-courier)}</b></span>`:""}`; };
+  drawItems(); upd();
+  ["#q_disc","#q_del"].forEach(s=>$(s).oninput=upd);
+  ["#q_bulkon","#q_delauto"].forEach(s=>$(s).onchange=upd);
+  $("#q_add").onclick=()=>{ items.push({productId:"",desc:"",qty:1,price:0}); drawItems(); upd(); const ins=$("#q_items").querySelectorAll('input[data-f="desc"]'); ins[ins.length-1].focus(); };
+  $("#q_cancel").onclick=closeModal;
+  $("#q_save").onclick=async ()=>{
+    const d=applyRules(read());
+    if(!d.customer){ alert("Please enter the customer name."); return; }
+    if(!d.items.length){ alert("Add at least one item."); return; }
+    let nq=null;
+    if(q) Object.assign(q,d); else { $("#q_save").disabled=true; DB.quotes=DB.quotes||[]; nq={ id:uid(), no:await nextNumber("quote"), created:new Date().toISOString(), ...d }; DB.quotes.push(nq); }
+    saveDB(); closeModal(); toast(q?"Quotation saved":"Quotation "+quoteNo(nq)+" saved"); render();
+  };
+  setTimeout(()=>$("#q_customer").focus(),60);
+}
+
+function quoteHTML(q){
+  const c=quoteCalc(q), S=DB.settings;
+  return `<div class="inv">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div><img src="logo.png" style="height:64px"><div style="margin-top:6px">${esc(S.address)}</div><div>${esc(S.phone)}</div></div>
+      <div style="text-align:right"><div style="font-size:24px;font-weight:700;color:#fe5f03;font-family:Outfit,sans-serif">QUOTATION</div><div><b>${quoteNo(q)}</b></div><div>Date: ${esc(q.date)}</div><div>Valid until: <b>${esc(q.validUntil||"—")}</b></div></div>
+    </div>
+    <hr style="margin:16px 0;border:none;border-top:3px solid #fe5f03">
+    <div><b>To:</b> ${esc(q.customer)}${q.company?"<br>"+esc(q.company):""}${q.address?"<br>"+esc(q.address):""}${q.phone?"<br>"+esc(q.phone):""}</div>
+    ${q.note?`<p style="margin-top:14px">${esc(q.note)}</p>`:""}
+    <table style="margin-top:16px;width:100%;border-collapse:collapse">
+      <tr><th style="text-align:left">#</th><th style="text-align:left">Description</th><th style="text-align:right">Qty</th><th style="text-align:right">Unit price</th><th style="text-align:right">Amount</th></tr>
+      ${c.items.map((it,i)=>`<tr><td>${i+1}</td><td>${esc(it.desc)}</td><td style="text-align:right">${num(it.qty)}</td><td style="text-align:right">${money(it.price)}</td><td style="text-align:right">${money(it.line)}</td></tr>`).join("")}
+      <tr><td colspan="4">Subtotal</td><td style="text-align:right">${money(c.subtotal)}</td></tr>
+      ${num(q.bulk)?`<tr><td colspan="4">Bulk discount (${money(q.bulkOff)} × ${num(q.bulkQty)})</td><td style="text-align:right">-${money(q.bulk)}</td></tr>`:""}
+      ${num(q.discount)?`<tr><td colspan="4">Discount</td><td style="text-align:right">-${money(q.discount)}</td></tr>`:""}
+      ${num(q.delivery)?`<tr><td colspan="4">Delivery</td><td style="text-align:right">${money(q.delivery)}</td></tr>`:""}
+      <tr class="tot"><td colspan="4">TOTAL</td><td style="text-align:right">${money(c.total)}</td></tr>
+    </table>
+    ${q.terms?`<div style="margin-top:22px;font-size:12.5px;color:#333"><b>Terms</b><div style="white-space:pre-wrap;margin-top:4px">${esc(q.terms)}</div></div>`:""}
+    <div style="display:flex;justify-content:space-between;margin-top:56px;font-size:12.5px">
+      <div>Thank you for choosing ${esc(S.businessName)}!</div>
+      <div style="text-align:center;min-width:200px"><div style="border-top:1px solid #000;padding-top:4px">Authorised by — ${esc(S.businessName)}</div></div>
+    </div>
+  </div>`;
+}
+function quotePDF(id){
+  const q=DB.quotes.find(x=>x.id===id); if(!q) return;
+  $("#printArea").innerHTML=quoteHTML(q);
+  const imgs=[...$("#printArea").querySelectorAll("img")];
+  Promise.all(imgs.map(i=>i.complete?1:new Promise(r=>{i.onload=i.onerror=r;}))).then(()=>setTimeout(async ()=>{
+    if(window.desktop && window.desktop.savePDF){ const r=await window.desktop.savePDF("CoverLanka "+quoteNo(q)+" "+(q.company||q.customer).replace(/[\\/:*?"<>|]/g,"")+".pdf"); if(r&&r.saved){ if(q.status==="Draft"){ q.status="Sent"; saveDB(); render(); } toast("Saved: "+r.path); } }
+    else window.print();
+  },80));
+}
+function quoteWhatsApp(id){
+  const q=DB.quotes.find(x=>x.id===id); if(!q) return;
+  const w=waNumber(q.phone); if(w.length<11){ toast("Add the customer's phone number to this quotation first"); openQuote(id); return; }
+  const c=quoteCalc(q);
+  const lines=c.items.map(it=>`• ${it.desc} × ${num(it.qty)} — රු. ${Math.round(num(it.price)).toLocaleString("en-US")} බැගින් = රු. ${Math.round(it.line).toLocaleString("en-US")}`).join("\n");
+  const text=`ආයුබෝවන් ${firstName(q.customer)} 😊\n${DB.settings.businessName} වෙතින් ඔබ ඉල්ලූ quotation එක (${quoteNo(q)}):\n\n${lines}`+
+    (num(q.bulk)?`\nBulk discount (රු. ${Math.round(num(q.bulkOff))} × ${num(q.bulkQty)}): -රු. ${Math.round(num(q.bulk)).toLocaleString("en-US")}`:"")+
+    (num(q.discount)?`\nDiscount: -රු. ${Math.round(num(q.discount)).toLocaleString("en-US")}`:"")+(num(q.delivery)?`\nDelivery: රු. ${Math.round(num(q.delivery)).toLocaleString("en-US")}`:"")+
+    `\n\nමුළු මුදල: රු. ${Math.round(c.total).toLocaleString("en-US")}\n${q.validUntil?`මෙම මිල ${q.validUntil} දක්වා වලංගුයි.\n`:""}Order එක confirm කරන්න මෙම chat එකට reply කරන්න. ස්තූතියි! 🙏`;
+  const url="https://wa.me/"+w+"?text="+encodeURIComponent(text);
+  if(window.desktop && window.desktop.openExternal) window.desktop.openExternal(url); else window.open(url,"_blank");
+  if(q.status==="Draft"){ q.status="Sent"; saveDB(); render(); }
+  toast("WhatsApp opening — attach the PDF too if you saved one");
+}
+function quoteToOrder(id){
+  const q=DB.quotes.find(x=>x.id===id); if(!q) return;
+  const c=quoteCalc(q);
+  const main=c.items.find(it=>it.productId) || c.items[0];
+  const pid=(main&&main.productId) || (DB.products[0]||{}).id;
+  const extra=c.items.filter(it=>it!==main);
+  // one order for the main item; other lines go into notes and the price difference into discount so the total matches
+  const qty=num(main.qty)||1;
+  const otherTotal=extra.reduce((a,it)=>a+it.line,0);
+  const price=Math.round((num(main.price)+otherTotal/qty)*100)/100; // extra lines are spread into the unit price so the total matches
+  openOrder(null, { customer:q.customer, phone:q.phone, address:q.address, productId:pid, qty, price, discount:num(q.discount)+num(q.bulk), delivery:num(q.delivery), courierCost:courierCharge(itemsWeight(c.items)),
+    status:"Confirmed", notes:[quoteNo(q), q.company, extra.length?("Also: "+extra.map(it=>it.desc+" × "+num(it.qty)).join(", ")):""].filter(Boolean).join(" · ") }, null,
+    (ord)=>{ q.status="Accepted"; q.orderId=ord.id; saveDB(); });
+  toast("Check the details, then click “Add order”");
+}
+
+/* ================= STOCK ================= */
+function renderStock(){
+  const rows = DB.products.map(p=>({p,s:stockOf(p)}));
+  const hist = [...DB.restocks].sort((a,b)=>(b.date||"").localeCompare(a.date||""));
+  $("#main").innerHTML = `
+    <div class="row"><div><h1>Stock</h1><p class="sub">Stock goes down automatically when you add an order (cancelled & returned orders don’t count).</p></div>
+      <div class="spacer"></div><button class="btn" id="pNew">+ New product</button><button class="btn primary" id="rNew">+ Add stock</button></div>
+    <div class="panel"><table><thead><tr><th>Code</th><th>Product</th><th class="num">Cost price</th><th class="num">Selling price</th><th class="num">Profit / item</th><th class="num">Stock in</th><th class="num">Sold</th><th class="num">Available</th><th>Status</th><th></th></tr></thead><tbody>
+      ${rows.map(({p,s})=>`<tr style="${p.active===false?"opacity:.5":""}"><td>${esc(p.code)}</td><td><b>${esc(p.name)}</b>${p.active===false?" (hidden)":""}</td>
+        <td class="num">${money(p.cost)}</td><td class="num">${money(p.price)}</td><td class="num">${money(num(p.price)-num(p.cost))}</td><td class="num">${s.stockIn}</td><td class="num">${s.sold}</td>
+        <td class="num"><b>${s.available}</b></td><td class="${stockClass(s.status)}">${s.status}</td>
+        <td><button class="btn sm" data-pedit="${p.id}">Edit</button></td></tr>`).join("")}
+    </tbody></table></div>
+    <div class="panel"><h3>Stock bought (history)</h3>
+      ${hist.length?`<table><thead><tr><th>Date</th><th>Product</th><th class="num">Qty</th><th class="num">Amount paid</th><th>Note</th><th></th></tr></thead><tbody>
+      ${hist.map(r=>{const p=product(r.productId);return `<tr><td>${esc(r.date)}</td><td>${esc(p?p.name:"?")}</td><td class="num">${esc(r.qty)}</td><td class="num">${money(r.amountPaid)}</td><td>${esc(r.note)}</td><td><button class="btn sm danger" data-rdel="${r.id}">Remove</button></td></tr>`}).join("")}
+      </tbody></table>`:`<div class="empty">No stock entries.</div>`}
+      <p class="hint">Transport for bringing stock goes in Expenses → “Stock transport”.</p>
+    </div>`;
+  $("#pNew").onclick=()=>openProduct();
+  $("#rNew").onclick=()=>openRestock();
+  document.querySelectorAll("[data-pedit]").forEach(b=>b.onclick=()=>openProduct(b.dataset.pedit));
+  document.querySelectorAll("[data-rdel]").forEach(b=>b.onclick=()=>{
+    const r=DB.restocks.find(x=>x.id===b.dataset.rdel);
+    if(confirm("Remove this stock entry ("+r.qty+" items on "+r.date+")?")){ DB.restocks=DB.restocks.filter(x=>x.id!==r.id); saveDB(); render(); }
+  });
+}
+function openProduct(id){
+  const p = id ? product(id) : null;
+  const v = p || { code:"RC-"+String(DB.products.length+1).padStart(3,"0"), name:"", cost:1800, price:2900, reorder:5, active:true };
+  modalKind="product";
+  $("#modal").innerHTML = `<h2>${p?"Edit product":"New product"}</h2>
+    <div class="grid2">
+      <div><label>Code</label><input id="p_code" value="${esc(v.code)}"></div>
+      <div><label>Name (e.g. Raincoat Black XL)</label><input id="p_name" value="${esc(v.name)}"></div>
+      <div><label>Cost price — what one costs us (Rs.)</label><input type="number" id="p_cost" value="${esc(v.cost)}"></div>
+      <div><label>Selling price (Rs.)</label><input type="number" id="p_price" value="${esc(v.price)}"></div>
+      <div><label>Warn me when stock is at or below</label><input type="number" id="p_reorder" value="${esc(v.reorder)}"></div>
+      <div><label>Weight of one (kg) — for delivery charges</label><input type="number" step="0.1" id="p_weight" value="${esc(v.weightKg==null?1:v.weightKg)}"></div>
+      ${p?`<div><label>Show in new orders</label><select id="p_active"><option value="1" ${v.active!==false?"selected":""}>Yes</option><option value="0" ${v.active===false?"selected":""}>No (hide)</option></select></div>`:`<div><label>Opening stock</label><input type="number" id="p_open" value="0"></div>`}
+    </div>
+    <p class="hint">Changing the cost price only affects new orders. Old orders keep the cost they were saved with.</p>
+    <div class="actions"><button class="btn" id="p_cancel">Cancel</button><button class="btn primary" id="p_save">Save</button></div>`;
+  openModalBg();
+  $("#p_cancel").onclick=closeModal;
+  $("#p_save").onclick=()=>{
+    const d={ code:$("#p_code").value.trim(), name:$("#p_name").value.trim(), cost:num($("#p_cost").value), price:num($("#p_price").value), reorder:num($("#p_reorder").value), weightKg:num($("#p_weight").value)||1 };
+    if(!d.name){ alert("Please enter a product name."); return; }
+    if(p){ Object.assign(p,d); p.active = $("#p_active").value==="1"; }
+    else { const np={ id:uid(), active:true, ...d }; DB.products.push(np); const op=num($("#p_open").value); if(op) DB.restocks.push({id:uid(),date:today(),productId:np.id,qty:op,amountPaid:op*d.cost,note:"Opening stock"}); }
+    saveDB(); closeModal(); toast("Product saved"); render();
+  };
+}
+function openRestock(){
+  const prods = DB.products.filter(p=>p.active!==false);
+  modalKind="restock";
+  $("#modal").innerHTML = `<h2>Add stock</h2>
+    <div class="grid2">
+      <div><label>Date</label><input type="date" id="r_date" value="${today()}"></div>
+      <div><label>Product</label><select id="r_prod">${prods.map(p=>`<option value="${p.id}">${esc(p.name)} (${esc(p.code)})</option>`).join("")}</select></div>
+      <div><label>Quantity received</label><input type="number" min="1" id="r_qty" value="10"></div>
+      <div><label>Amount paid to supplier (Rs.)</label><input type="number" id="r_paid"></div>
+      <div class="full"><label>Note</label><input id="r_note" placeholder="e.g. supplier name"></div>
+    </div>
+    <p class="hint">Add the transport cost for this stock in Expenses → “Stock transport”.</p>
+    <div class="actions"><button class="btn" id="r_cancel">Cancel</button><button class="btn primary" id="r_save">Add stock</button></div>`;
+  openModalBg();
+  const fill=()=>{ const p=product($("#r_prod").value); $("#r_paid").value=(parseInt($("#r_qty").value)||0)*(p?num(p.cost):0); };
+  $("#r_qty").oninput=fill; $("#r_prod").onchange=fill; fill();
+  $("#r_cancel").onclick=closeModal;
+  $("#r_save").onclick=()=>{
+    const qty=parseInt($("#r_qty").value)||0; if(qty<=0){ alert("Enter a quantity."); return; }
+    DB.restocks.push({id:uid(),date:$("#r_date").value||today(),productId:$("#r_prod").value,qty,amountPaid:num($("#r_paid").value),note:$("#r_note").value.trim()});
+    saveDB(); closeModal(); toast(qty+" added to stock"); render();
+  };
+}
+
+/* ================= EXPENSES ================= */
+function catOptions(sel){ const cats=[...EXP_CATS]; if(sel && !cats.includes(sel)) cats.push(sel); return cats.map(c=>`<option ${c===sel?"selected":""}>${esc(c)}</option>`).join(""); }
+function renderExpenses(){
+  const ym=state.expMonth;
+  const list=DB.expenses.filter(e=>!ym||(e.date||"").slice(0,7)===ym).sort((a,b)=>(b.date||"").localeCompare(a.date||""));
+  const total=list.reduce((a,e)=>a+num(e.amount),0);
+  const cats=[...new Set(list.map(e=>e.category))];
+  const byCat=cats.map(c=>[c,list.filter(e=>e.category===c).reduce((a,e)=>a+num(e.amount),0)]).sort((a,b)=>b[1]-a[1]);
+  $("#main").innerHTML=`
+    <div class="row"><div><h1>Expenses</h1><p class="sub">Ads, packaging, transport, registration and other spending. (Courier cost for each parcel is in the order. Stock purchases are in Stock.)</p></div></div>
+    <div class="panel"><h3>Add expense</h3>
+      <div class="row" style="align-items:flex-end">
+        <div style="width:160px"><label>Date</label><input type="date" id="e_date" value="${today()}"></div>
+        <div style="width:190px"><label>Category</label><select id="e_cat">${catOptions()}</select></div>
+        <div style="flex:1;min-width:200px"><label>Description</label><input id="e_desc" placeholder="e.g. FB ad — raincoat video"></div>
+        <div style="width:140px"><label>Amount (Rs.)</label><input type="number" id="e_amt"></div>
+        <button class="btn primary" id="e_add">Add</button>
+      </div></div>
+    <div class="two">
+      <div class="panel" style="grid-column:span 1">
+        <div class="row" style="margin-bottom:12px"><h3 style="margin:0">${monthName(ym)}: ${money(total)}</h3><div class="spacer"></div>
+          <input type="month" id="em" value="${ym}" style="width:170px"><button class="btn sm" id="emAll">${ym?"All time":"This month"}</button></div>
+        ${list.length?`<table><thead><tr><th>Date</th><th>Category</th><th>Description</th><th class="num">Amount</th><th></th></tr></thead><tbody>
+        ${list.map(e=>`<tr><td>${esc(e.date)}</td><td>${esc(e.category)}</td><td>${esc(e.description)}</td><td class="num">${money(e.amount)}</td><td class="actions-cell"><button class="btn sm" data-eedit="${e.id}">Edit</button> <button class="btn sm danger" data-edel="${e.id}">Delete</button></td></tr>`).join("")}
+        </tbody></table>`:`<div class="empty">No expenses for this period.</div>`}
+      </div>
+      <div class="panel"><h3>By category</h3>
+        ${byCat.length?`<table>${byCat.map(x=>`<tr><td>${esc(x[0])}</td><td class="num">${money(x[1])}</td></tr>`).join("")}<tr><td><b>Total</b></td><td class="num"><b>${money(total)}</b></td></tr></table>`:`<div class="empty">—</div>`}
+      </div>
+    </div>`;
+  $("#e_add").onclick=()=>{
+    const amt=num($("#e_amt").value); if(amt<=0){ alert("Enter an amount."); return; }
+    DB.expenses.push({id:uid(),date:$("#e_date").value||today(),category:$("#e_cat").value,description:$("#e_desc").value.trim(),amount:amt});
+    saveDB(); toast("Expense added"); render();
+  };
+  $("#em").onchange=e=>{ state.expMonth=e.target.value; render(); };
+  $("#emAll").onclick=()=>{ state.expMonth=state.expMonth?"":thisMonth(); render(); };
+  document.querySelectorAll("[data-edel]").forEach(b=>b.onclick=()=>{ if(confirm("Delete this expense?")){ DB.expenses=DB.expenses.filter(x=>x.id!==b.dataset.edel); saveDB(); render(); } });
+  document.querySelectorAll("[data-eedit]").forEach(b=>b.onclick=()=>openExpense(b.dataset.eedit));
+}
+function openExpense(id){
+  const e=DB.expenses.find(x=>x.id===id); modalKind="expense";
+  $("#modal").innerHTML=`<h2>Edit expense</h2><div class="grid2">
+    <div><label>Date</label><input type="date" id="x_date" value="${esc(e.date)}"></div>
+    <div><label>Category</label><select id="x_cat">${catOptions(e.category)}</select></div>
+    <div class="full"><label>Description</label><input id="x_desc" value="${esc(e.description)}"></div>
+    <div><label>Amount (Rs.)</label><input type="number" id="x_amt" value="${esc(e.amount)}"></div></div>
+    <div class="actions"><button class="btn" id="x_cancel">Cancel</button><button class="btn primary" id="x_save">Save</button></div>`;
+  openModalBg();
+  $("#x_cancel").onclick=closeModal;
+  $("#x_save").onclick=()=>{ Object.assign(e,{date:$("#x_date").value||e.date,category:$("#x_cat").value,description:$("#x_desc").value.trim(),amount:num($("#x_amt").value)}); saveDB(); closeModal(); toast("Expense saved"); render(); };
+}
+
+/* ================= PARTNERS ================= */
+function renderPartners(){
+  const P=DB.partners||[]; const M=businessMoney(); const cap=M.capital||1;
+  $("#main").innerHTML=`
+    <div class="row"><div><h1>Capital & partners</h1><p class="sub">Who put money into the business, and each person’s share.</p></div><div class="spacer"></div><button class="btn primary" id="ptNew">+ Add partner / money</button></div>
+    <div class="cards">
+      <div class="card or"><div class="k">Capital invested</div><div class="v">${money(M.capital)}</div></div>
+      <div class="card"><div class="k">Spent on stock</div><div class="v">${money(M.stockBought)}</div></div>
+      <div class="card"><div class="k">Expenses so far</div><div class="v">${money(M.expenses)}</div></div>
+      <div class="card"><div class="k">Cash balance (est.)</div><div class="v">${money(M.cash)}</div></div>
+      <div class="card"><div class="k">Business value</div><div class="v">${money(M.worth)}</div><div class="s">cash + stock at cost</div></div>
+    </div>
+    <div class="panel"><table><thead><tr><th>Partner</th><th>Date</th><th class="num">Invested</th><th class="num">Share</th><th class="num">Share of profit so far</th><th class="num">Share of business value</th><th></th></tr></thead><tbody>
+      ${P.map(p=>{const sh=num(p.amount)/cap; return `<tr><td><b>${esc(p.name)}</b></td><td>${esc(p.date)}</td><td class="num">${money(p.amount)}</td><td class="num">${Math.round(sh*1000)/10}%</td><td class="num">${money(M.netProfit*sh)}</td><td class="num">${money(M.worth*sh)}</td><td><button class="btn sm" data-ptedit="${p.id}">Edit</button></td></tr>`}).join("")}
+    </tbody></table>
+    <p class="hint">Click Edit to put each partner’s real name.</p></div>`;
+  $("#ptNew").onclick=()=>openPartner();
+  document.querySelectorAll("[data-ptedit]").forEach(b=>b.onclick=()=>openPartner(b.dataset.ptedit));
+}
+function openPartner(id){
+  const p=id?(DB.partners||[]).find(x=>x.id===id):null; modalKind="partner";
+  const v=p||{name:"",amount:25000,date:today()};
+  $("#modal").innerHTML=`<h2>${p?"Edit partner":"Add partner / money"}</h2><div class="grid2">
+    <div><label>Name</label><input id="pt_name" value="${esc(v.name)}"></div>
+    <div><label>Amount invested (Rs.)</label><input type="number" id="pt_amt" value="${esc(v.amount)}"></div>
+    <div><label>Date</label><input type="date" id="pt_date" value="${esc(v.date)}"></div></div>
+    <div class="actions">${p?`<button class="btn danger" id="pt_del">Remove</button><div class="spacer"></div>`:""}<button class="btn" id="pt_cancel">Cancel</button><button class="btn primary" id="pt_save">Save</button></div>`;
+  openModalBg();
+  $("#pt_cancel").onclick=closeModal;
+  if(p) $("#pt_del").onclick=()=>{ if(confirm("Remove "+p.name+"?")){ DB.partners=DB.partners.filter(x=>x.id!==p.id); saveDB(); closeModal(); render(); } };
+  $("#pt_save").onclick=()=>{ const d={name:$("#pt_name").value.trim()||"Partner",amount:num($("#pt_amt").value),date:$("#pt_date").value||today()};
+    if(p) Object.assign(p,d); else (DB.partners=DB.partners||[]).push({id:uid(),...d}); saveDB(); closeModal(); toast("Saved"); render(); };
+}
+
+/* ================= WHATSAPP ================= */
+const ICON_MORE = '<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>';
+const ICON_WA = '<svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.3-.4.8-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6a2.7 2.7 0 0 0 1.8-1.3 2.2 2.2 0 0 0 .2-1.3c-.1-.1-.2-.2-.5-.3z"/></svg>';
+function firstName(n){ const parts=String(n||"").trim().split(/\s+/).filter(w=>!/^(mr|mrs|ms|miss|dr|rev|prof|sir|madam)\.?$/i.test(w)); return parts[0]||String(n||"").trim(); }
+function waNumber(phone){ const p=normPhone(phone); if(p.length===10 && p[0]==="0") return "94"+p.slice(1); return p; }
+function fillTemplate(t,o){
+  const c=orderCalc(o);
+  return t.replace(/\{name\}/g,firstName(o.customer))
+    .replace(/\{fullname\}/g,o.customer||"").replace(/\{orderNo\}/g,orderNo(o)).replace(/\{qty\}/g,c.qty)
+    .replace(/\{total\}/g,Math.round(c.total).toLocaleString("en-US")).replace(/\{tracking\}/g,o.tracking||"-")
+    .replace(/\{courier\}/g,DB.settings.courier||"courier").replace(/\{business\}/g,DB.settings.businessName||"");
+}
+function openWhatsApp(o, number, text){
+  const url="https://wa.me/"+number+"?text="+encodeURIComponent(text);
+  if(window.desktop && window.desktop.openExternal) window.desktop.openExternal(url); else window.open(url,"_blank");
+  (o.waLog=o.waLog||[]).push({date:today()}); saveDB(); toast("Opening WhatsApp for "+o.customer);
+}
+function closeMenus(){ document.querySelectorAll(".menu").forEach(m=>m.remove()); }
+document.addEventListener("click", closeMenus);
+let _menuAt=0;
+window.addEventListener("scroll", ()=>{ if(Date.now()-_menuAt>400) closeMenus(); }, true);
+function waMenu(btn, id){
+  closeMenus();
+  const o=DB.orders.find(x=>x.id===id); if(!o) return;
+  const nums=[]; const add=(n,label)=>{ const w=waNumber(n); if(w.length>=11 && !nums.some(x=>x.w===w)) nums.push({w,label,show:normPhone(n)}); };
+  add(o.whatsapp,"WhatsApp number"); add(o.phone,"Delivery phone");
+  if(!nums.length){ toast("Add a WhatsApp number or phone to this order first"); return; }
+  let pick=0;
+  const m=document.createElement("div"); m.className="menu";
+  const draw=()=>{ m.innerHTML=`<div class="mh">Send to ${esc(o.customer)} on</div>`+
+    (nums.length>1?`<div class="seg" style="margin:2px 8px 8px;display:flex">${nums.map((n,i)=>`<button data-n="${i}" class="${i===pick?"on":""}" style="flex:1;text-align:center">${esc(n.show)}<br><span style="font-weight:500;font-size:11px">${n.label}</span></button>`).join("")}</div>`
+      :`<div class="mh" style="padding-top:0;color:var(--ink);font-weight:700">${esc(nums[0].show)} <span class="muted" style="font-weight:500">· ${nums[0].label}</span></div>`)+
+    (DB.settings.wa||[]).map((t,i)=>`<button data-i="${i}">${esc(t.name)}</button>`).join("")+
+    `<hr><button data-i="new" style="color:var(--brand-ink);font-weight:700">+ Write your own message…</button><button data-i="-1">Empty message</button><button data-i="manage" class="muted">Edit saved messages</button>`; };
+  draw(); document.body.appendChild(m); _menuAt=Date.now();
+  const r=btn.getBoundingClientRect(); const w=m.offsetWidth, h=m.offsetHeight;
+  m.style.left=Math.max(8,Math.min(window.innerWidth-w-8, r.right-w))+"px";
+  m.style.top=(r.bottom+6+h>window.innerHeight ? Math.max(8,r.top-h-6) : r.bottom+6)+"px";
+  m.addEventListener("click",e=>{ e.stopPropagation();
+    const nb=e.target.closest("[data-n]"); if(nb){ pick=+nb.dataset.n; draw(); return; }
+    const b=e.target.closest("[data-i]"); if(!b) return; closeMenus();
+    if(b.dataset.i==="new"){ openWaCompose(o, nums, pick); return; }
+    if(b.dataset.i==="manage"){ page="settings"; render(); setTimeout(()=>{ const el=$("#waList"); if(el) el.scrollIntoView({behavior:"smooth",block:"center"}); },80); return; }
+    const i=+b.dataset.i; openWhatsApp(o, nums[pick].w, i<0?"":fillTemplate(DB.settings.wa[i].text,o)); });
+}
+
+function openWaCompose(o, nums, pick){
+  modalKind="wa";
+  const chips=[["{name}","Name"],["{orderNo}","Order no"],["{qty}","Qty"],["{total}","Total"],["{tracking}","Tracking no"],["{courier}","Courier"]];
+  $("#modal").innerHTML=`<h2>WhatsApp message to ${esc(o.customer)}</h2>
+    ${nums.length>1?`<label>Send to</label><div class="seg" id="wc_nums" style="margin-bottom:14px">${nums.map((n,i)=>`<button data-n="${i}" class="${i===pick?"on":""}">${esc(n.show)} · ${n.label}</button>`).join("")}</div>`:`<p class="muted" style="margin-top:0">Send to ${esc(nums[0].show)} (${nums[0].label})</p>`}
+    <div class="grid2" style="align-items:start">
+      <div>
+        <label for="wc_text">Message</label>
+        <textarea id="wc_text" rows="8" placeholder="ආයුබෝවන් {name}, ..."></textarea>
+        <div class="hint" style="margin-top:8px">Add details — they fill in by themselves for each customer:</div>
+        <div class="chips">${chips.map(([k,l])=>`<button data-k="${k}">+ ${l}</button>`).join("")}</div>
+        <label style="display:flex;gap:8px;align-items:center;margin-top:16px;font-size:13px;color:var(--ink);font-weight:600"><input type="checkbox" id="wc_save" style="width:auto" checked> Save this message for next time</label>
+        <input id="wc_name" placeholder="Name for this message, e.g. Size check" style="margin-top:8px">
+      </div>
+      <div><label>Preview</label><div class="wa-preview" id="wc_prev"></div></div>
+    </div>
+    <div class="actions"><button class="btn" id="wc_cancel">Cancel</button><button class="btn primary" id="wc_send">${ICON_WA}Send on WhatsApp</button></div>`;
+  openModalBg();
+  const ta=$("#wc_text");
+  const upd=()=>{ $("#wc_prev").textContent = ta.value.trim() ? fillTemplate(ta.value,o) : "Your message appears here."; $("#wc_name").style.display=$("#wc_save").checked?"":"none"; };
+  ta.oninput=upd; $("#wc_save").onchange=upd; upd(); setTimeout(()=>ta.focus(),60);
+  document.querySelectorAll("#modal [data-k]").forEach(b=>b.onclick=()=>{ const k=b.dataset.k, st=ta.selectionStart, en=ta.selectionEnd; ta.value=ta.value.slice(0,st)+k+ta.value.slice(en); ta.focus(); ta.selectionStart=ta.selectionEnd=st+k.length; upd(); });
+  if($("#wc_nums")) $("#wc_nums").onclick=e=>{ const b=e.target.closest("[data-n]"); if(!b) return; pick=+b.dataset.n; $("#wc_nums").querySelectorAll("button").forEach((x,i)=>x.classList.toggle("on",i===pick)); };
+  $("#wc_cancel").onclick=closeModal;
+  $("#wc_send").onclick=()=>{
+    const text=ta.value.trim(); if(!text){ ta.focus(); return; }
+    if($("#wc_save").checked){ const name=$("#wc_name").value.trim()||text.split("\n")[0].slice(0,30); (DB.settings.wa=DB.settings.wa||[]).push({name,text}); saveDB(); toast("Message saved for next time"); }
+    closeModal(); openWhatsApp(o, nums[pick].w, fillTemplate(text,o));
+  };
+}
+
+/* ================= CLAUDE WEEKLY SUMMARY ================= */
+function weekStats(){
+  const t=new Date(today()); const iso=d=>d.toISOString().slice(0,10);
+  const d7=iso(new Date(t-6*86400000)), d14=iso(new Date(t-13*86400000));
+  const pick=(a,b)=>DB.orders.filter(o=>(o.date||"")>=a && (o.date||"")<=b);
+  const sumUp=list=>{ const del=list.filter(o=>o.status==="Delivered"); return {
+    orders:list.filter(o=>o.status!=="Cancelled").length, delivered:del.length, returned:list.filter(o=>o.status==="Returned").length,
+    cancelled:list.filter(o=>o.status==="Cancelled").length, raincoats:list.filter(countsTowardStock).reduce((a,o)=>a+(num(o.qty)||1),0),
+    salesDelivered:Math.round(del.reduce((a,o)=>a+orderCalc(o).total,0)) }; };
+  const thisW=pick(d7,today()), lastW=pick(d14,iso(new Date(t-7*86400000)));
+  const dist={}; thisW.forEach(o=>{ const k=o.district||o.city||"unknown"; dist[k]=(dist[k]||0)+1; });
+  const exp7=DB.expenses.filter(e=>(e.date||"")>=d7).reduce((a,e)=>a+num(e.amount),0);
+  const ads7=DB.expenses.filter(e=>(e.date||"")>=d7 && e.category==="Facebook Ads").reduce((a,e)=>a+num(e.amount),0);
+  const M=businessMoney(); const run=stockRunway();
+  return { today:today(), thisWeek:sumUp(thisW), lastWeek:sumUp(lastW), districtsThisWeek:dist, expensesThisWeek:exp7, facebookAdsThisWeek:ads7,
+    stockInHand:run.avail, avgRaincoatsSoldPerDay14d:+run.perDay.toFixed(2), stockDaysLeft:run.days,
+    ordersNeedingAttention:reminders().length, pendingOrders:DB.orders.filter(o=>["New","Confirmed","Dispatched"].includes(o.status)).length,
+    allTime:{ capital:M.capital, cashBalance:Math.round(M.cash), profitSoFar:Math.round(M.netProfit), businessValue:Math.round(M.worth) },
+    pricing:{ sellingPrice:num((DB.products[0]||{}).price), costPrice:num((DB.products[0]||{}).cost), deliveryFirstKg:num(pricing().firstKg), deliveryPerExtraKg:num(pricing().extraKg), bulkDiscountTiers:pricing().tiers } };
+}
+async function weeklySummary(){
+  const box=$("#sumText"), btn=$("#dSum");
+  if(!(DB.settings.claudeKey||"").trim() && !window.__mockSummary){ box.className="empty"; box.innerHTML="<b>Claude is not connected</b>Add the API key in Settings & backup → Claude."; return; }
+  btn.disabled=true; box.className="summary"; box.innerHTML='<span class="spin"></span>Claude is reading this week’s numbers…';
+  const prompt=`You are helping the owners of CoverLanka, a small raincoat business in Sri Lanka (4 student partners, sells on Facebook, cash on delivery via Domex).
+Here are this week's numbers as JSON (money in LKR):
+${JSON.stringify(weekStats(),null,1)}
+
+Write a short weekly summary in simple, friendly spoken Sinhala (Sinhala script; English words like order, stock, ad, COD are fine as Sri Lankans say them).
+Format: 4-6 short lines starting with "• " covering how the week went vs last week, stock, money, and anything that needs attention; then a line "මේ සතියට කරන්න:" followed by 2-3 short practical suggestions starting with "→ ".
+Use only the numbers given. Do not invent facts. If there is little data, say so briefly. Under 170 words. No heading, no markdown bold.`;
+  try{
+    const text = window.__mockSummary ? await window.__mockSummary(prompt) : await callClaudeRaw([{type:"text",text:prompt}], 900);
+    DB.lastSummary={ date:new Date().toLocaleString("en-GB",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}), text:text.trim() }; saveDB();
+    if(page==="dashboard") render();
+  }catch(e){ box.className="empty"; box.innerHTML="<b>Claude could not write the summary</b>"+esc(e.message==="NO_KEY"?"Add the API key in Settings.":e.message); btn.disabled=false; }
+}
+
+/* ================= MONTHLY REPORT (PDF) ================= */
+function monthlyReport(ym){
+  const S=DB.settings; const inM=d=>(d||"").slice(0,7)===ym;
+  const orders=DB.orders.filter(o=>inM(o.date)); const del=orders.filter(o=>o.status==="Delivered"); const ret=orders.filter(o=>o.status==="Returned");
+  const sales=del.reduce((a,o)=>a+orderCalc(o).total,0), pcost=del.reduce((a,o)=>a+orderCalc(o).productCost,0);
+  const courier=[...del,...ret].reduce((a,o)=>a+num(o.courierCost),0);
+  const exList=DB.expenses.filter(e=>inM(e.date)); const exps=exList.reduce((a,e)=>a+num(e.amount),0);
+  const net=sales-pcost-courier-exps; const sold=orders.filter(countsTowardStock).reduce((a,o)=>a+(num(o.qty)||1),0);
+  const cats={}; exList.forEach(e=>cats[e.category]=(cats[e.category]||0)+num(e.amount));
+  const dist={}; orders.filter(o=>o.status!=="Cancelled").forEach(o=>{ const k=o.district||o.city||"Not set"; dist[k]=(dist[k]||0)+1; });
+  const M=businessMoney(); const P=DB.partners||[]; const cap=M.capital||1;
+  const byStatus=STATUSES.map(s=>[s,orders.filter(o=>o.status===s).length]).filter(x=>x[1]);
+  const html=`<div class="rep">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end">
+      <div><img src="logo.png" style="height:54px"><h1 style="margin-top:6px">Monthly report — ${monthName(ym)}</h1></div>
+      <div style="text-align:right;color:#555;font-size:12px">Made ${today()}<br>${esc(S.businessName)}</div></div>
+    <div class="kp">
+      <div>Orders<b>${orders.filter(o=>o.status!=="Cancelled").length}</b></div><div>Raincoats sold<b>${sold}</b></div>
+      <div>Sales (delivered)<b>${money(sales)}</b></div><div>Net profit<b>${money(net)}</b></div></div>
+    <h2>Profit</h2><table>
+      <tr><td>Sales from delivered orders (incl. delivery charge)</td><td class="n">${money(sales)}</td></tr>
+      <tr><td>Product cost</td><td class="n">-${money(pcost)}</td></tr>
+      <tr><td>Courier cost (delivered + returned)</td><td class="n">-${money(courier)}</td></tr>
+      <tr><td>Other expenses</td><td class="n">-${money(exps)}</td></tr>
+      <tr><td><b>Net profit</b></td><td class="n"><b>${money(net)}</b></td></tr></table>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+      <div><h2>Orders by status</h2><table>${byStatus.map(([s,n])=>`<tr><td>${s}</td><td class="n">${n}</td></tr>`).join("")||"<tr><td>No orders</td></tr>"}</table></div>
+      <div><h2>Expenses by category</h2><table>${Object.entries(cats).sort((a,b)=>b[1]-a[1]).map(([c,v])=>`<tr><td>${esc(c)}</td><td class="n">${money(v)}</td></tr>`).join("")||"<tr><td>No expenses</td></tr>"}</table></div>
+    </div>
+    <h2>Where orders came from</h2><table>${Object.entries(dist).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<tr><td>${esc(k)}</td><td class="n">${v}</td></tr>`).join("")||"<tr><td>No orders</td></tr>"}</table>
+    <h2>Partners</h2><table><tr><th>Partner</th><th class="n">Invested</th><th class="n">Share</th><th class="n">Share of this month’s profit</th><th class="n">Share of profit so far</th><th class="n">Share of business value</th></tr>
+      ${P.map(p=>{const sh=num(p.amount)/cap;return `<tr><td>${esc(p.name)}</td><td class="n">${money(p.amount)}</td><td class="n">${Math.round(sh*1000)/10}%</td><td class="n">${money(net*sh)}</td><td class="n">${money(M.netProfit*sh)}</td><td class="n">${money(M.worth*sh)}</td></tr>`}).join("")}</table>
+    <h2>Business position today</h2><table>
+      <tr><td>Capital invested</td><td class="n">${money(M.capital)}</td></tr><tr><td>Cash balance (estimated)</td><td class="n">${money(M.cash)}</td></tr>
+      <tr><td>Stock in hand (${DB.products.reduce((a,p)=>a+Math.max(0,stockOf(p).available),0)} items, at cost)</td><td class="n">${money(M.stockValue)}</td></tr>
+      <tr><td><b>Business value</b></td><td class="n"><b>${money(M.worth)}</b></td></tr><tr><td>Total profit so far</td><td class="n">${money(M.netProfit)}</td></tr></table>
+  </div>`;
+  $("#printArea").innerHTML=html;
+  const imgs=[...$("#printArea").querySelectorAll("img")];
+  Promise.all(imgs.map(i=>i.complete?1:new Promise(r=>{i.onload=i.onerror=r;}))).then(()=>setTimeout(async ()=>{
+    if(window.desktop && window.desktop.savePDF){ const r=await window.desktop.savePDF("CoverLanka report "+ym+".pdf"); if(r&&r.saved) toast("Report saved: "+r.path); }
+    else window.print();
+  },80));
+}
+
+/* ================= PIN LOCK ================= */
+async function sha(text){ const b=await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text)); return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join(""); }
+function showLock(){
+  if(!DB.settings.pinHash) return;
+  closeModal(); $("#lock").classList.add("on"); $("#lockPin").value=""; $("#lockMsg").textContent=""; setTimeout(()=>$("#lockPin").focus(),50);
+}
+async function tryUnlock(){
+  const v=$("#lockPin").value.trim();
+  if(await sha(DB.settings.pinSalt+v)===DB.settings.pinHash){ $("#lock").classList.remove("on"); return; }
+  $("#lockMsg").textContent="Wrong PIN. Try again."; const c=$("#lock .card"); c.classList.remove("shake"); void c.offsetWidth; c.classList.add("shake"); $("#lockPin").select();
+}
+$("#lockGo").onclick=tryUnlock;
+$("#lockPin").addEventListener("keydown",e=>{ if(e.key==="Enter") tryUnlock(); });
+$("#lockForgot").onclick=async e=>{ e.preventDefault();
+  const code=prompt("Enter the recovery code you wrote down when you set the PIN:"); if(!code) return;
+  if(await sha(DB.settings.pinSalt+code.trim().toUpperCase())===DB.settings.recoveryHash){ delete DB.settings.pinHash; delete DB.settings.recoveryHash; saveDB(); $("#lock").classList.remove("on"); toast("PIN removed. Set a new one in Settings."); render(); }
+  else $("#lockMsg").textContent="That recovery code is not right.";
+};
+async function setPin(pin){
+  const salt=uid()+uid(); const rc=Array.from(crypto.getRandomValues(new Uint8Array(5))).map(x=>"ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[x%32]).join("")+"-"+Array.from(crypto.getRandomValues(new Uint8Array(5))).map(x=>"ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[x%32]).join("");
+  DB.settings.pinSalt=salt; DB.settings.pinHash=await sha(salt+pin); DB.settings.recoveryHash=await sha(salt+rc); saveDB();
+  return rc;
+}
+
+/* ================= SETTINGS ================= */
+function renderSettings(){
+  const S=DB.settings;
+  const path = window.desktop && window.desktop.dataPath ? window.desktop.dataPath() : "Browser storage";
+  const canFolder = !!(window.desktop && window.desktop.chooseFolder);
+  $("#main").innerHTML=`
+    <h1>Settings & backup</h1><p class="sub">Business details here appear on invoices, labels and WhatsApp messages.</p>
+
+    <div class="panel"><h3>Team account</h3>
+      <div class="row"><div><div style="font-weight:700">${esc(CLOUD.user?CLOUD.user.email:"")}</div>
+        <div class="syncrow" style="margin-top:4px"><span class="sync ${!CLOUD.online?"off":(CLOUD.pending?"busy":"")}"></span>${!CLOUD.online?"Offline — changes sync when internet is back":"Everything is saved online and shared with the team"}</div></div>
+        <div class="spacer"></div><button class="btn" id="so_btn">Sign out of this device</button></div>
+    </div>
+
+    <div class="panel"><h3>Appearance</h3>
+      <div class="seg" role="group" aria-label="Theme"><button id="th_l" class="${currentTheme()==="light"?"on":""}">Light</button><button id="th_d" class="${currentTheme()==="dark"?"on":""}">Dark</button></div>
+    </div>
+
+    <div class="panel"><h3>Business details</h3>
+      <div class="grid2">
+        <div><label for="s_name">Business name</label><input id="s_name" value="${esc(S.businessName)}"></div>
+        <div><label for="s_phone">Phone</label><input id="s_phone" value="${esc(S.phone)}"></div>
+        <div class="full"><label for="s_addr">Address (for labels)</label><input id="s_addr" value="${esc(S.address)}"></div>
+        <div><label for="s_courier">Courier company</label><input id="s_courier" value="${esc(S.courier)}"></div>
+        <div></div>
+        <div><label for="s_rn">Remind me when an order is not dispatched after (days)</label><input type="number" min="1" id="s_rn" value="${esc(S.remindNewDays)}"></div>
+        <div><label for="s_rd">Remind me when a parcel is not delivered after (days)</label><input type="number" min="1" id="s_rd" value="${esc(S.remindDispatchDays)}"></div>
+      </div>
+      <div class="actions" style="justify-content:flex-start"><button class="btn primary" id="s_save">Save settings</button></div>
+    </div>
+
+    <div class="panel"><h3>Prices, bulk discount & delivery</h3>
+      <p class="hint" style="margin-top:0">Delivery is worked out by weight (each raincoat ${esc(String((DB.products[0]||{}).weightKg||1))} kg — change it in Stock → Edit). These rules are used in orders and quotations.</p>
+      <div class="grid2">
+        <div><label for="pr_f">Delivery — customer pays, first kg (Rs.)</label><input type="number" id="pr_f" value="${esc(pricing().firstKg)}"></div>
+        <div><label for="pr_e">Delivery — customer pays, each extra kg (Rs.)</label><input type="number" id="pr_e" value="${esc(pricing().extraKg)}"></div>
+        <div><label for="pr_cf">Courier cost — we pay, first kg (Rs.)</label><input type="number" id="pr_cf" value="${esc(pricing().courierFirstKg)}"></div>
+        <div><label for="pr_ce">Courier cost — we pay, each extra kg (Rs.)</label><input type="number" id="pr_ce" value="${esc(pricing().courierExtraKg)}"></div>
+      </div>
+      <label style="margin-top:18px">Bulk discount</label>
+      <div id="tierList"></div>
+      <div class="row" style="margin-top:10px"><button class="btn sm" id="tier_add">+ Add a level</button><div class="spacer"></div><button class="btn primary" id="pr_save">Save prices</button></div>
+      <p class="hint" id="pr_example"></p>
+    </div>
+
+    <div class="panel"><h3 class="claude-mark"><i></i>Claude</h3>
+      <p style="margin-top:0">Reads order screenshots (press <b>Ctrl+V</b>) and writes the weekly summary on the dashboard. Needs internet.</p>
+      <div class="grid2">
+        <div><label for="s_key">Claude API key</label><input type="password" id="s_key" value="${esc(S.claudeKey)}" placeholder="sk-ant-..."></div>
+        <div><label for="s_model">Model</label><select id="s_model">
+          <option value="claude-sonnet-5-5" ${S.claudeModel==="claude-sonnet-5-5"?"selected":""}>Claude Sonnet 5.5 — best for Sinhala (recommended)</option>
+          <option value="claude-haiku-5-5" ${S.claudeModel==="claude-haiku-5-5"?"selected":""}>Claude Haiku 5.5 — faster</option>
+        </select></div>
+      </div>
+      <p class="hint">Uses the monthly API credit that comes with the Claude Max plan. The key is saved in your team’s online account, so everyone signed in can read screenshots. It is left out of backup files.</p>
+      <div class="row" style="margin-top:10px"><button class="btn primary" id="s_keysave">Save Claude settings</button><span id="s_keymsg" class="muted">${S.claudeKey?"Key saved":"Not connected"}</span></div>
+    </div>
+
+    <div class="panel"><h3>WhatsApp messages</h3>
+      <p class="hint" style="margin-top:0">These appear when you press WhatsApp on an order. You can use: {name} {fullname} {orderNo} {qty} {total} {tracking} {courier} {business}</p>
+      <div id="waList"></div>
+      <div class="row" style="margin-top:12px"><button class="btn" id="wa_add">+ Add message</button><button class="btn" id="wa_reset">Reset to the standard messages</button><div class="spacer"></div><button class="btn primary" id="wa_save">Save messages</button></div>
+    </div>
+
+    <div class="panel"><h3>App lock</h3>
+      ${S.pinHash?`<p style="margin-top:0">A PIN is set. The app asks for it every time it opens, and when you press <b>Lock</b>.</p>
+        <div class="row"><button class="btn" id="pin_change">Change PIN</button><button class="btn danger" id="pin_off">Turn off PIN</button></div>`
+      :`<p style="margin-top:0">Set a 4–6 digit PIN so only your team can open the app.</p>
+        <div class="row" style="align-items:flex-end"><div style="width:160px"><label for="pin1">New PIN</label><input type="password" inputmode="numeric" maxlength="6" id="pin1"></div>
+        <div style="width:160px"><label for="pin2">Type it again</label><input type="password" inputmode="numeric" maxlength="6" id="pin2"></div><button class="btn primary" id="pin_set">Set PIN</button></div>`}
+      <div id="pin_msg"></div>
+    </div>
+
+    <div class="panel"><h3>Backup</h3>
+      <p style="margin-top:0">Everything saves automatically on this computer${window.desktop?", with a copy kept for each day":""}.<br><span class="muted">Data file: ${esc(path)}</span></p>
+      ${canFolder?`<div style="padding:14px 16px;border:1px solid var(--line);border-radius:var(--r-m);background:var(--panel-2);margin-bottom:14px">
+        <b>Automatic backup to Google Drive</b>
+        <p class="hint" style="margin:4px 0 10px">Install <b>Google Drive for desktop</b> on this laptop, then choose a folder inside Google Drive here. The app saves a backup there every day, and Google Drive uploads it.</p>
+        <div class="row"><span class="${S.backupFolder?"":"muted"}" style="font-weight:600">${S.backupFolder?esc(S.backupFolder):"No folder chosen"}</span><div class="spacer"></div>
+        <button class="btn" id="bf_pick">${S.backupFolder?"Change folder":"Choose folder"}</button>${S.backupFolder?`<button class="btn" id="bf_now">Back up now</button><button class="btn danger" id="bf_off">Stop</button>`:""}</div>
+        ${S.lastExtraBackup?`<div class="hint">Last copy: ${esc(S.lastExtraBackup)}</div>`:""}
+      </div>`:""}
+      <div class="row">
+        <button class="btn" id="b_exp">Download backup file</button>
+        <button class="btn" id="b_imp">Restore from backup file…</button>
+        <input type="file" id="b_file" accept=".json" style="display:none">
+        <button class="btn" id="b_csv">Export orders (CSV)</button>
+        <button class="btn" id="b_ccsv">Export customers (CSV)</button>
+        ${window.desktop&&window.desktop.openDataFolder?`<button class="btn" id="b_open">Open data folder</button>`:""}
+      </div>
+    </div>
+
+    <div class="panel"><h3>Start again</h3>
+      <p class="hint" style="margin-top:0">Deletes every order, product, stock entry, expense and partner. Download a backup first.</p>
+      <button class="btn danger" id="b_reset">Delete all data</button>
+    </div>`;
+
+  $("#so_btn").onclick=signOutTeam;
+  $("#th_l").onclick=()=>{ S.theme="light"; saveDB(); applyTheme(true); render(); };
+  $("#th_d").onclick=()=>{ S.theme="dark"; saveDB(); applyTheme(true); render(); };
+  $("#s_save").onclick=()=>{
+    Object.assign(S,{ businessName:$("#s_name").value.trim()||"CoverLanka", phone:$("#s_phone").value.trim(), address:$("#s_addr").value.trim(),
+      courier:$("#s_courier").value.trim()||"Courier",
+      remindNewDays:Math.max(1,num($("#s_rn").value)||2), remindDispatchDays:Math.max(1,num($("#s_rd").value)||5) });
+    saveDB(); toast("Settings saved"); render();
+  };
+  // prices & bulk discount
+  let tiers=JSON.parse(JSON.stringify(pricing().tiers||[]));
+  const example=()=>{ const P={firstKg:num($("#pr_f").value),extraKg:num($("#pr_e").value)}; const ex=[1,2,5,10].map(n=>`${n} → ${money(byWeight(n*num((DB.products[0]||{}).weightKg||1),P.firstKg,P.extraKg))}`).join(" · ");
+    $("#pr_example").textContent="Delivery examples (raincoats → customer pays): "+ex; };
+  const drawTiers=()=>{ $("#tierList").innerHTML=tiers.map((t,i)=>`<div class="row" style="margin-top:8px;gap:8px">
+      <span>When buying</span><input type="number" min="1" data-tm="${i}" value="${esc(t.min)}" style="width:80px"><span>or more raincoats —</span>
+      <input type="number" data-to="${i}" value="${esc(t.off)}" style="width:100px"><span>Rs. off each</span>
+      <button class="btn sm danger" data-td="${i}" aria-label="Remove level">✕</button></div>`).join("") || '<p class="muted">No bulk discount.</p>';
+    document.querySelectorAll("[data-tm]").forEach(el=>el.oninput=()=>tiers[+el.dataset.tm].min=num(el.value));
+    document.querySelectorAll("[data-to]").forEach(el=>el.oninput=()=>tiers[+el.dataset.to].off=num(el.value));
+    document.querySelectorAll("[data-td]").forEach(el=>el.onclick=()=>{ tiers.splice(+el.dataset.td,1); drawTiers(); }); };
+  drawTiers(); example(); ["#pr_f","#pr_e"].forEach(id=>$(id).oninput=example);
+  $("#tier_add").onclick=()=>{ tiers.push({min:20,off:400}); drawTiers(); };
+  $("#pr_save").onclick=()=>{ S.pricing={ firstKg:num($("#pr_f").value), extraKg:num($("#pr_e").value), courierFirstKg:num($("#pr_cf").value), courierExtraKg:num($("#pr_ce").value),
+      tiers:tiers.filter(t=>num(t.min)>0&&num(t.off)>0).sort((a,b)=>a.min-b.min) }; saveDB(); toast("Prices saved"); render(); };
+  $("#s_keysave").onclick=()=>{ S.claudeKey=$("#s_key").value.trim(); S.claudeModel=$("#s_model").value; saveDB(); $("#s_keymsg").textContent=S.claudeKey?"Key saved":"Not connected"; toast("Claude settings saved"); };
+
+  // WhatsApp templates
+  let wa = JSON.parse(JSON.stringify(S.wa||DEFAULT_WA));
+  const drawWa=()=>{ $("#waList").innerHTML = wa.map((t,i)=>`<div style="display:grid;grid-template-columns:220px 1fr auto;gap:12px;margin-top:12px;align-items:start">
+      <input data-wn="${i}" value="${esc(t.name)}" aria-label="Message name"><textarea data-wt="${i}" rows="4" aria-label="Message text">${esc(t.text)}</textarea>
+      <button class="btn sm danger" data-wd="${i}">Remove</button></div>`).join("");
+    document.querySelectorAll("[data-wn]").forEach(el=>el.oninput=()=>wa[+el.dataset.wn].name=el.value);
+    document.querySelectorAll("[data-wt]").forEach(el=>el.oninput=()=>wa[+el.dataset.wt].text=el.value);
+    document.querySelectorAll("[data-wd]").forEach(el=>el.onclick=()=>{ wa.splice(+el.dataset.wd,1); drawWa(); }); };
+  drawWa();
+  $("#wa_add").onclick=()=>{ wa.push({name:"New message",text:"ආයුබෝවන් {name},\n"}); drawWa(); };
+  $("#wa_reset").onclick=()=>{ wa=JSON.parse(JSON.stringify(DEFAULT_WA)); drawWa(); };
+  $("#wa_save").onclick=()=>{ S.wa=wa.filter(t=>t.name.trim()&&t.text.trim()); saveDB(); toast("WhatsApp messages saved"); };
+
+  // PIN
+  const pinMsg=(html)=>$("#pin_msg").innerHTML=html;
+  if($("#pin_set")) $("#pin_set").onclick=async ()=>{
+    const a=$("#pin1").value.trim(), b=$("#pin2").value.trim();
+    if(!/^\d{4,6}$/.test(a)){ pinMsg('<p class="hint" style="color:var(--red)">Use 4 to 6 numbers.</p>'); return; }
+    if(a!==b){ pinMsg('<p class="hint" style="color:var(--red)">The two PINs are different.</p>'); return; }
+    const rc=await setPin(a); renderNavTools();
+    $("#main").querySelector("#pin_msg").closest(".panel").innerHTML=`<h3>App lock</h3><div class="alert" style="margin:0"><b>PIN is set.</b> Write this recovery code somewhere safe — it is the only way in if the PIN is forgotten:<div style="font-family:Outfit,sans-serif;font-size:26px;letter-spacing:3px;margin:8px 0;color:var(--ink)">${rc}</div>It will not be shown again.</div><div class="actions" style="justify-content:flex-start"><button class="btn primary" id="pin_ok">I wrote it down</button></div>`;
+    $("#pin_ok").onclick=()=>render();
+  };
+  if($("#pin_off")) $("#pin_off").onclick=()=>{ if(confirm("Turn off the PIN? Anyone using this laptop will be able to open the app.")){ delete S.pinHash; delete S.recoveryHash; saveDB(); toast("PIN turned off"); render(); } };
+  if($("#pin_change")) $("#pin_change").onclick=()=>{ delete S.pinHash; delete S.recoveryHash; saveDB(); render(); setTimeout(()=>$("#pin1")&&$("#pin1").focus(),50); };
+
+  // Google Drive folder
+  if($("#bf_pick")) $("#bf_pick").onclick=async ()=>{ const f=await window.desktop.chooseFolder(); if(f){ S.backupFolder=f; saveDB(); toast("Backups will go to this folder"); render(); } };
+  if($("#bf_now")) $("#bf_now").onclick=()=>{ saveDB(true); toast("Backup copied to the folder"); setTimeout(render,300); };
+  if($("#bf_off")) $("#bf_off").onclick=()=>{ S.backupFolder=""; saveDB(); render(); };
+
+  $("#b_exp").onclick=()=>{ const copy=JSON.parse(JSON.stringify(DB)); copy.settings.claudeKey=""; download("coverlanka-backup-"+today()+".json", JSON.stringify(copy,null,1), "application/json"); };
+  $("#b_imp").onclick=()=>$("#b_file").click();
+  $("#b_file").onchange=e=>{
+    const f=e.target.files[0]; if(!f) return;
+    const r=new FileReader(); r.onload=()=>{
+      try{ const d=JSON.parse(r.result); if(!d.orders||!d.products) throw new Error("This is not a CoverLanka backup file");
+        if(confirm("Replace ALL online data (for everyone) with this backup ("+d.orders.length+" orders)?")){ const key=DB.settings.claudeKey; if(!d.settings) d.settings={}; if(!d.settings.claudeKey) d.settings.claudeKey=key; uploadAll(d); } }
+      catch(err){ alert("Could not read the backup: "+err.message); }
+    }; r.readAsText(f);
+  };
+  $("#b_csv").onclick=exportOrdersCSV;
+  $("#b_ccsv").onclick=exportCustomersCSV;
+  if($("#b_open")) $("#b_open").onclick=()=>window.desktop.openDataFolder();
+  $("#b_reset").onclick=()=>{
+    if(confirm("This deletes every order, product, stock entry, expense and partner. Download a backup first!\n\nDelete everything?") && confirm("Are you really sure? This cannot be undone.")){
+      const d=defaultData(); d.settings.claudeKey=DB.settings.claudeKey; uploadAll(d); toast("All data deleted");
+    }
+  };
+}
+function download(name, text, type){
+  const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([text],{type})); a.download=name;
+  document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },500);
+}
+const csvq=v=>{ v=String(v??""); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
+function exportOrdersCSV(){
+  const head=["Order No","Date","Customer","Phone","WhatsApp","Address","City","District","Product","Qty","Unit Price","Discount","Delivery Charge","Courier Cost","Total","Product Cost","Profit","Payment","Status","Tracking","Notes"];
+  const rows=[...DB.orders].sort((a,b)=>a.no-b.no).map(o=>{ const c=orderCalc(o); const p=product(o.productId);
+    return [orderNo(o),o.date,o.customer,o.phone,o.whatsapp||"",o.address,o.city,o.district,p?p.name:"",c.qty,o.price,o.discount,o.delivery,o.courierCost,c.total,c.productCost,c.profit,o.payment,o.status,o.tracking,o.notes].map(csvq).join(","); });
+  download("coverlanka-orders-"+today()+".csv", "﻿"+[head.join(","),...rows].join("\r\n"), "text/csv");
+}
+function exportCustomersCSV(){
+  const head=["Name","Phone","WhatsApp","Address","City","District","Orders","Delivered","Returned","Spent","First order","Last order"];
+  const rows=customers().map(c=>[c.name,c.phone,c.whatsapp||"",c.address,c.city,c.district,c.orders,c.delivered,c.returned,c.spent,c.first,c.last].map(csvq).join(","));
+  download("coverlanka-customers-"+today()+".csv", "﻿"+[head.join(","),...rows].join("\r\n"), "text/csv");
+}
+
+/* ================= START ================= */
+boot();
+if("serviceWorker" in navigator && location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
+</script>
+</body>
+</html>
