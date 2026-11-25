@@ -511,7 +511,7 @@ function defaultData(){
   const pid = uid();
   return {
     version:1,
-    settings:{ businessName:"CoverLanka", phone:"", address:"", defaultDelivery:450, defaultCourierCost:450, courier:"Domex" },
+    settings:{ businessName:"CoverLanka", phone:"", address:"", defaultDelivery:425, defaultCourierCost:425, courier:"Domex" },
     products:[{ id:pid, code:"RC-001", name:"Raincoat", cost:1800, price:2900, reorder:5, active:true }],
     restocks:[{ id:uid(), date:today(), productId:pid, qty:30, note:"Opening stock" }],
     orders:[], expenses:[], nextOrderNo:1
@@ -555,7 +555,7 @@ function migrate(d){
   }
   d.orders.forEach(o=>{ if(o.district==null) o.district=""; });
   if(!d.quotes) d.quotes=[]; if(!d.nextQuoteNo) d.nextQuoteNo=1;
-  if(!d.settings.pricing) d.settings.pricing={ firstKg:450, extraKg:150, courierFirstKg:450, courierExtraKg:150, tiers:[{min:5,off:150},{min:10,off:300}] };
+  if(!d.settings.pricing) d.settings.pricing={ firstKg:425, extraKg:150, courierFirstKg:425, courierExtraKg:150, tiers:[{min:5,off:150},{min:10,off:300}] };
   d.products.forEach(p=>{ if(p.weightKg==null) p.weightKg=1; });
   return d;
 }
@@ -988,7 +988,7 @@ function orderCalc(o){
   return { qty, subtotal, total, productCost, profit };
 }
 /* Prices, bulk discount and weight-based delivery */
-function pricing(){ return DB.settings.pricing || { firstKg:450, extraKg:150, courierFirstKg:450, courierExtraKg:150, tiers:[] }; }
+function pricing(){ return DB.settings.pricing || { firstKg:425, extraKg:150, courierFirstKg:425, courierExtraKg:150, tiers:[] }; }
 function itemsWeight(items){ return items.reduce((a,it)=>{ const p=it.productId?product(it.productId):null; return a+(p?num(p.weightKg==null?1:p.weightKg):0)*num(it.qty); },0); }
 function byWeight(kg, first, extra){ if(kg<=0) return 0; return num(first)+num(extra)*(Math.ceil(kg-1e-9)-1); }
 function deliveryCharge(kg){ const P=pricing(); return byWeight(kg,P.firstKg,P.extraKg); }
