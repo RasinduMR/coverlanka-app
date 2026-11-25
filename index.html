@@ -1303,7 +1303,7 @@ async function imageToJpegBase64(file){
   return { dataUrl, base64: dataUrl.split(",")[1], mediaType:"image/jpeg" };
 }
 async function callClaudeRaw(content, maxTokens){
-  const key=(DB.settings.claudeKey||"").trim(); const model=DB.settings.claudeModel||DEFAULT_MODEL;
+  const key=(DB.settings.claudeKey||"").replace(/\s+/g,""); const model=DB.settings.claudeModel||DEFAULT_MODEL;
   if(!key) throw new Error("NO_KEY");
   if(window.desktop && window.desktop.claude){
     const r = await window.desktop.claude({ apiKey:key, model, content, maxTokens:maxTokens||1024 });
@@ -1343,7 +1343,9 @@ async function readScreenshot(file, after){
     txt.innerHTML = filled.length ? `<b>Filled ${filled.length} field(s) from the screenshot</b>Check the highlighted fields, then click “Add order”.` : `<b>No delivery details found in this image.</b>Please type them in.`;
     if(after) after();
   }catch(e){
-    if(e.message==="NO_KEY") txt.innerHTML=`<b>Claude is not connected yet.</b>Add your Claude API key in Settings & Backup → Claude, then try again. You can still type the details.`;
+    if(/x-api-key|authentication|401/i.test(e.message)) txt.innerHTML=`<b>The Claude key is not right.</b>Copy the key again with the “Copy key” button in the Claude Console and paste it in Settings & backup → Claude. You can still type the details.`;
+    else if(/credit|billing|balance/i.test(e.message)) txt.innerHTML=`<b>No Claude API credit left.</b>Check the credit in the Claude Console. You can still type the details.`;
+    else if(e.message==="NO_KEY") txt.innerHTML=`<b>Claude is not connected yet.</b>Add your Claude API key in Settings & Backup → Claude, then try again. You can still type the details.`;
     else txt.innerHTML=`<b>Claude could not read it.</b>${esc(e.message)}. Check the internet connection, or type the details.`;
   }
 }
@@ -2091,7 +2093,7 @@ function renderSettings(){
   $("#tier_add").onclick=()=>{ tiers.push({min:20,off:400}); drawTiers(); };
   $("#pr_save").onclick=()=>{ S.pricing={ firstKg:num($("#pr_f").value), extraKg:num($("#pr_e").value), courierFirstKg:num($("#pr_cf").value), courierExtraKg:num($("#pr_ce").value),
       tiers:tiers.filter(t=>num(t.min)>0&&num(t.off)>0).sort((a,b)=>a.min-b.min) }; saveDB(); toast("Prices saved"); render(); };
-  $("#s_keysave").onclick=()=>{ S.claudeKey=$("#s_key").value.trim(); S.claudeModel=$("#s_model").value; saveDB(); $("#s_keymsg").textContent=S.claudeKey?"Key saved":"Not connected"; toast("Claude settings saved"); };
+  $("#s_keysave").onclick=()=>{ S.claudeKey=$("#s_key").value.replace(/\s+/g,""); S.claudeModel=$("#s_model").value; saveDB(); $("#s_keymsg").textContent=S.claudeKey?"Key saved":"Not connected"; toast("Claude settings saved"); };
 
   // WhatsApp templates
   let wa = JSON.parse(JSON.stringify(S.wa||DEFAULT_WA));
