@@ -275,6 +275,104 @@
   @media (max-width:1180px){
     button.wa .wa-t{display:none} button.wa svg{margin:0}
   }
+
+  /* ---------- dashboard: today's work ---------- */
+  .dash-head{margin-bottom:18px}
+  .lanes{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:8px}
+  @media (max-width:1180px){.lanes{grid-template-columns:1fr}}
+  .lane{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-m);padding:16px 16px 10px;box-shadow:var(--shadow-1);display:flex;flex-direction:column;min-width:0}
+  .lane.hot{border-color:var(--red);box-shadow:inset 0 3px 0 var(--red)}
+  .lane header{display:flex;align-items:center;gap:8px}
+  .lane h3{margin:0;font-size:16px;font-weight:600}
+  .lane .cnt{margin-left:auto;min-width:28px;height:28px;padding:0 8px;border-radius:99px;background:var(--gray-soft);display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-family:"Outfit",sans-serif;font-size:15px}
+  .lane.hot .cnt{background:var(--red);color:#fff}
+  .lane-hint{margin:4px 0 8px;color:var(--muted);font-size:12.5px}
+  .lane-hint a{color:var(--brand-ink);font-weight:600}
+  .lane-empty{color:var(--muted);padding:18px 4px 14px;font-size:13px}
+  .lane-more{background:none;border:0;color:var(--brand-ink);font-weight:700;font-size:13px;padding:10px 4px 4px;cursor:pointer;text-align:left;font-family:inherit}
+  .lrow{display:flex;align-items:center;gap:10px;padding:10px 4px;border-top:1px solid var(--line)}
+  .lrow.tap{cursor:pointer;border-radius:8px}
+  .lrow.tap:hover{background:var(--panel-2)}
+  .lrow .who{flex:1;min-width:0}
+  .lrow .who b{display:block;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .lrow .who span{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+  .lrow .act{display:flex;gap:6px;flex-shrink:0;align-items:center}
+  .lrow .why{color:var(--red);font-weight:700}
+  .tag{font-style:normal;font-size:10.5px;font-weight:700;padding:1px 6px;border-radius:99px;margin-left:2px}
+  .tag.new{background:var(--blue-soft);color:var(--blue)} .tag.late{background:var(--red-soft);color:var(--red)}
+  button.btn.icon{padding:5px 8px;line-height:0} button.btn.icon svg{margin:0}
+  @media (min-width:761px){ button.wa.only-ic .wa-t{display:none} button.wa.only-ic svg{margin:0} }
+  /* ---------- Domex status chip ---------- */
+  .dxchip{display:inline-flex;align-items:center;gap:6px;border:1px solid transparent;border-radius:99px;padding:4px 9px 4px 7px;font:700 11.5px/1.2 inherit;font-family:inherit;cursor:pointer;white-space:nowrap}
+  .dxchip.wait{background:var(--gray-soft);color:var(--ink-2)}
+  .dxchip.go{background:var(--amber-soft);color:var(--amber)}
+  .dxchip.ok{background:var(--green-soft);color:var(--green)}
+  .dxchip.bad{background:var(--red-soft);color:var(--red)}
+  .dxchip:hover{border-color:currentColor}
+  .dxbar{display:inline-flex;gap:2px}
+  .dxbar i{width:6px;height:6px;border-radius:2px;background:currentColor;opacity:.22}
+  .dxbar i.on{opacity:1}
+  .trk-no{font-weight:700;letter-spacing:.02em}
+  /* ---------- tracking window ---------- */
+  .trk-head{display:flex;gap:16px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;margin-bottom:18px}
+  .trk-no.big{font-family:"Outfit",sans-serif;font-size:18px;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:6px 10px}
+  .trk-steps{list-style:none;margin:0 0 16px;padding:0;display:grid;grid-template-columns:repeat(5,1fr);position:relative}
+  .trk-steps li{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;position:relative}
+  .trk-steps li::before{content:"";position:absolute;top:15px;left:-50%;width:100%;height:3px;background:var(--line-2);z-index:0}
+  .trk-steps li:first-child::before{display:none}
+  .trk-steps li.done::before,.trk-steps li.now::before{background:var(--brand)}
+  .trk-steps .dot{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;background:var(--panel);border:2px solid var(--line-2);color:var(--muted);position:relative;z-index:1}
+  .trk-steps li.done .dot{background:var(--brand);border-color:var(--brand);color:#fff}
+  .trk-steps li.now .dot{border-color:var(--brand);color:var(--brand-ink);box-shadow:0 0 0 4px var(--brand-soft)}
+  .trk-steps li.now.bad .dot{border-color:var(--red);color:var(--red);box-shadow:0 0 0 4px var(--red-soft)}
+  .trk-steps .lbl{font-size:12px;font-weight:600;color:var(--muted)}
+  .trk-steps li.now .lbl,.trk-steps li.done .lbl{color:var(--ink)}
+  .trk-alert{background:var(--amber-soft);color:var(--amber);border-radius:var(--r-m);padding:10px 13px;margin-bottom:12px;font-weight:500}
+  .trk-alert.bad{background:var(--red-soft);color:var(--red)}
+  .trk-list{border-left:2px solid var(--line);margin:4px 0 6px 8px;padding-left:16px;max-height:300px;overflow:auto}
+  .trk-ev{position:relative;padding:0 0 12px}
+  .trk-ev::before{content:"";position:absolute;left:-22px;top:5px;width:10px;height:10px;border-radius:50%;background:var(--line-2)}
+  .trk-ev:first-child::before{background:var(--brand)}
+  .trk-ev.bad::before{background:var(--red)}
+  .trk-ev .t{font-size:11.5px;color:var(--muted)}
+  .trk-ev .x{font-weight:700}
+  .trk-ev .w{font-size:12.5px;color:var(--ink-2)}
+  .trk-actions{flex-wrap:wrap}
+  /* ---------- tracking number helper ---------- */
+  .trk-help{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;align-items:center}
+  .trk-help button{background:var(--brand-soft);color:var(--brand-ink);border:1px solid var(--brand-line);border-radius:99px;padding:4px 10px;font:700 12px inherit;font-family:inherit;cursor:pointer}
+  input.ask{border-color:var(--brand)!important;box-shadow:0 0 0 3px var(--brand-soft)}
+  @media (max-width:760px){
+    .lane{padding:14px 14px 8px;border-radius:18px}
+    .trk-steps .lbl{font-size:10.5px}
+    .trk-steps .dot{width:28px;height:28px}.trk-steps li::before{top:13px}
+    .modal .trk-actions .btn{flex:1 1 45%}
+    .dash-head #dReport{display:none}
+  }
+
+  /* orders as compact cards on phones */
+  @media (max-width:760px){
+    table.resp.ord tr{display:grid;grid-template-columns:1fr auto;column-gap:10px;row-gap:6px;padding:14px 2px}
+    table.resp.ord td{display:block;padding:0;text-align:left}
+    table.resp.ord td::before{display:none}
+    table.resp.ord td.c-no{grid-column:1;grid-row:1;font-size:14px}
+    table.resp.ord td.c-no .cell2{display:inline;margin-left:6px}
+    table.resp.ord td.c-tot{grid-column:2;grid-row:1 / span 2;text-align:right;font-weight:700;font-size:16px}
+    table.resp.ord td.c-tot .cell2{display:block;font-weight:500}
+    table.resp.ord td.c-cust{grid-column:1;grid-row:2}
+    table.resp.ord td.c-cust .cell1{font-size:16px}
+    table.resp.ord td.c-cust .cell2{white-space:normal}
+    table.resp.ord td.c-qty{display:none}
+    table.resp.ord td.c-st{grid-column:1;grid-row:3}
+    table.resp.ord td.c-trk{grid-column:1 / -1;grid-row:4}
+    table.resp.ord td.c-trk .tdv{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    table.resp.ord td.c-trk .cell2{display:inline;margin:0}
+    table.resp.ord td.c-trk:has(.nodx){display:none}
+    table.resp.ord td.actions-cell{grid-column:1 / -1;grid-row:5;display:flex;flex-wrap:nowrap;gap:6px;padding-top:4px}
+    table.resp.ord td.actions-cell:has(.primary,[data-addtr]) .wa-t{display:none!important}
+    table.resp.ord td.actions-cell:has(.primary,[data-addtr]) button.wa svg{margin:0!important}
+    table.resp.ord td .tdv{text-align:left}
+  }
   @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 
   /* ---------- print ---------- */
@@ -984,7 +1082,9 @@ function applyDomexStatus(o, arr){
   const last=domexLatest(arr); if(!last) return false;
   const code=String(last.statusCode||"").toUpperCase();
   const prev=o.domex&&o.domex.code;
-  o.domex={ code, text:DOMEX_STATUS[code]||last.status||code, at:last.statusDate, checked:new Date().toISOString() };
+  const events=[...arr].sort((a,b)=>String(a.statusDate).localeCompare(String(b.statusDate))).slice(-25)
+    .map(e=>({ d:e.statusDate, c:String(e.statusCode||"").toUpperCase(), t:String(e.status||""), r:String(e.remark||"") }));
+  o.domex={ code, text:DOMEX_STATUS[code]||last.status||code, at:last.statusDate, checked:new Date().toISOString(), events };
   let changed = prev!==code;
   if((code==="D"||code==="PS") && o.status==="Dispatched"){ o.status="Delivered"; o.deliveredDate=String(last.statusDate||"").slice(0,10)||today(); changed=true; }
   else if(/return/i.test(String(last.status)) && o.status==="Dispatched"){ o.status="Returned"; changed=true; }
@@ -996,6 +1096,81 @@ async function checkDomexOrder(o){
   if(r.status!==200) throw new Error(domexErr(r));
   applyDomexStatus(o, r.data); saveDB(); return o.domex;
 }
+/* where a parcel is, in five steps the team and the customer understand */
+const DX_STEPS=["Booked","Picked up","On the way","Out for delivery","Delivered"];
+const DX_STEP_OF={ CI:0, CIU:0, I:1, CC:1, SO:2, SCCI:2, M:2, A:2, ATD:3, D:4, PS:4 };
+function dxStep(o){ if(!o.domex) return o.domexSent?0:-1;
+  const ev=o.domex.events||[{c:o.domex.code}]; let st=0;
+  ev.forEach(e=>{ const v=DX_STEP_OF[e.c]; if(v!=null && v>st) st=v; });
+  return st; }
+function dxProblem(o){ const c=o.domex&&o.domex.code; return c==="RS"||c==="HI"; }
+function canSendDomex(o){ return domexOn() && !!o.tracking && !o.domexSent && !o.domex && !["Cancelled","Delivered","Returned"].includes(o.status); }
+function relTime(iso){ if(!iso) return ""; const t=new Date(iso).getTime(); if(isNaN(t)) return ""; const m=Math.round((Date.now()-t)/60000);
+  if(m<1) return "just now"; if(m<60) return m+" min ago"; const h=Math.round(m/60); if(h<24) return h+" h ago"; const d=Math.round(h/24); return d===1?"yesterday":d+" days ago"; }
+function dxChip(o){
+  if(!o.tracking) return '<span class="muted nodx">—</span>';
+  const st=dxStep(o), prob=dxProblem(o);
+  if(st<0) return `<span class="trk-no">${esc(o.tracking)}</span>`;
+  const cls=prob?"bad":st===4?"ok":st===0?"wait":"go";
+  const label=prob?o.domex.text:(o.domex?(DOMEX_STATUS[o.domex.code]||o.domex.text):"In Domex");
+  return `<button class="dxchip ${cls}" data-trk="${o.id}" title="See where parcel ${esc(o.tracking)} is"><span class="dxbar" aria-hidden="true">${[0,1,2,3,4].map(i=>`<i class="${i<=st?"on":""}"></i>`).join("")}</span>${esc(label)}</button>`;
+}
+/* Waybills come in books, so each tracking no is usually the last one + 1 */
+function lastTracking(exceptId){
+  const list=DB.orders.filter(o=>o.id!==exceptId && /\d$/.test(o.tracking||""));
+  if(!list.length) return "";
+  const when=o=>o.trackingAt||o.domexSent||o.created||o.date||"";
+  list.sort((a,b)=>String(when(a)).localeCompare(String(when(b)))||a.no-b.no);
+  return list[list.length-1].tracking;
+}
+function trackingUsed(t, exceptId){ const k=String(t||"").toUpperCase(); return !!k && DB.orders.some(o=>o.id!==exceptId && String(o.tracking||"").toUpperCase()===k); }
+function nextTracking(exceptId){
+  const last=lastTracking(exceptId); const m=last.match(/^(.*?)(\d+)$/); if(!m) return "";
+  let n=BigInt(m[2]); for(let i=0;i<60;i++){ n+=1n; const t=m[1]+n.toString().padStart(m[2].length,"0"); if(!trackingUsed(t,exceptId)) return t; }
+  return "";
+}
+function expandTracking(v, exceptId){
+  v=String(v||"").replace(/\s+/g,"").toUpperCase();
+  const last=lastTracking(exceptId), m=last.match(/^(.*?)(\d+)$/);
+  if(m && /^\d{1,5}$/.test(v) && v.length<m[2].length){ const full=m[1]+m[2].slice(0,m[2].length-v.length)+v; return full; }
+  return v;
+}
+function addTracking(id){ openOrder(id); setTimeout(()=>{ const f=$("#f_tracking"); if(f){ f.scrollIntoView({block:"center"}); f.focus(); f.classList.add("ask"); } },120); }
+async function openTracking(id){
+  const o=DB.orders.find(x=>x.id===id); if(!o) return;
+  modalKind="track";
+  const draw=(busy,err)=>{
+    const st=dxStep(o), prob=dxProblem(o), ev=[...((o.domex&&o.domex.events)||[])].reverse();
+    $("#modal").innerHTML=`
+      <div class="trk-head"><div><h2 style="margin:0">${orderNo(o)} · ${esc(o.customer)}</h2>
+        <div class="muted" style="margin-top:4px">${esc([o.city,o.district].filter(Boolean).join(", "))} · ${money(orderCalc(o).total)} ${esc(o.payment)}</div></div>
+        <div class="trk-no big">${esc(o.tracking||"No tracking no")}</div></div>
+      ${st<0&&!busy?`<div class="trk-alert">This parcel is not in Domex yet.${canSendDomex(o)?" Send it with the button below.":""}</div>`:""}
+      <ol class="trk-steps">${DX_STEPS.map((n,i)=>`<li class="${i<st?"done":i===st?(prob?"now bad":"now"):""}"><span class="dot">${i<st||(i===st&&st===4)?"✓":i+1}</span><span class="lbl">${n}</span></li>`).join("")}</ol>
+      ${prob?`<div class="trk-alert bad"><b>${esc(o.domex.text)}.</b> Domex could not deliver this time. Call the customer and tell Domex when to bring it.</div>`:""}
+      ${err?`<div class="trk-alert bad">${esc(err)}</div>`:""}
+      <div class="trk-list">${busy&&!ev.length?'<div class="muted"><span class="spin"></span>Asking Domex…</div>':ev.length?ev.map(e=>`<div class="trk-ev ${["RS","HI"].includes(e.c)?"bad":""}"><div class="t">${esc(niceTime(e.d))}</div><div class="x">${esc(DOMEX_STATUS[e.c]||e.t)}</div><div class="w">${esc(e.t)}${e.r&&!/^\d+(\.\d+)?$/.test(e.r)?" · "+esc(e.r):""}</div></div>`).join(""):'<div class="muted">No Domex updates yet.</div>'}</div>
+      ${o.domex&&o.domex.checked?`<div class="hint">Checked ${esc(relTime(o.domex.checked))}${busy?' <span class="spin"></span>':""}</div>`:""}
+      <div class="actions trk-actions">
+        ${o.tracking?`<button class="btn" id="trWeb">Domex website</button>`:""}
+        <button class="btn" data-tel="${esc(o.phone)}">${ICON_CALL}Call</button>
+        <button class="btn wa" id="trWa">${ICON_WA}<span class="wa-t">WhatsApp</span></button>
+        ${canSendDomex(o)?'<button class="btn primary" id="trSend">Send to Domex</button>':""}
+        <button class="btn" id="trClose">Close</button>
+      </div>`;
+    $("#trClose").onclick=closeModal;
+    if($("#trWeb")) $("#trWeb").onclick=()=>window.open("https://domex.lk/Order-Details.php?wbno="+encodeURIComponent(o.tracking),"_blank","noopener");
+    $("#modal").querySelectorAll("[data-tel]").forEach(b=>b.onclick=()=>{ location.href="tel:"+b.dataset.tel; });
+    $("#trWa").onclick=e=>{ e.stopPropagation(); waMenu($("#trWa"), o.id); };
+    if($("#trSend")) $("#trSend").onclick=async()=>{ closeModal(); await sendToDomex(o); };
+  };
+  draw(domexOn()&&!!o.tracking); openModalBg();
+  if(domexOn() && o.tracking && (o.domexSent||o.domex||o.status==="Dispatched")){
+    try{ await checkDomexOrder(o); if(modalKind==="track") draw(false); render(); }
+    catch(e){ if(modalKind==="track") draw(false, /no record/i.test(e.message)?"":e.message); }
+  } else draw(false);
+}
+
 let _dxSync=false;
 async function syncDomex(force){
   const D=domexSet();
@@ -1243,11 +1418,66 @@ function renderDashboard(){
   const rem = reminders(); const run = stockRunway();
   const sum = DB.lastSummary;
 
+  const hr=new Date().getHours(), hello=hr<12?"Good morning":hr<17?"Good afternoon":"Good evening";
+  const nd=num(DB.settings.remindNewDays)||2, dd=num(DB.settings.remindDispatchDays)||5;
+  const byNo=(x,y)=>x.no-y.no;
+  const toSend=DB.orders.filter(o=>["New","Confirmed"].includes(o.status)).sort(byNo);
+  const disp=DB.orders.filter(o=>o.status==="Dispatched").sort(byNo);
+  const late=o=>!o.domex && daysSince(o.dispatchedDate||o.date)>=dd;
+  const calls=disp.filter(o=>dxProblem(o)||late(o));
+  const onWay=disp.filter(o=>!calls.includes(o));
+  const D=domexSet(), todo=toSend.length+calls.length;
+  const laneRow=(o,right,sub,tags)=>`<div class="lrow${o.tracking&&dxStep(o)>=0?" tap":""}" ${o.tracking&&dxStep(o)>=0?`data-open="${o.id}" tabindex="0"`:""}>
+      <div class="who"><b>${esc(o.customer)}${tags||""}</b><span>${sub}</span></div><div class="act">${right}</div></div>`;
+  const subOf=o=>`${orderNo(o)} · ${esc(o.city||o.district||"—")} · ${money(orderCalc(o).total)}`;
+  const laneMore=(n,st)=>n>6?`<button class="lane-more" data-goto="${st}">See all ${n}</button>`:"";
+  const sendAct=o=>canSendDomex(o)?`<button class="btn sm primary" data-dx="${o.id}">Send to Domex</button>`
+      :!o.tracking?`<button class="btn sm" data-addtr="${o.id}">Add tracking no</button>`
+      :`<button class="btn sm" data-edit="${o.id}">Edit</button>`;
+
   $("#main").innerHTML = `
-    <div class="row"><div><h1>Dashboard</h1><p class="sub" style="margin:0">${esc(DB.settings.businessName)} · ${new Date().toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"})}</p></div>
+    <div class="row dash-head"><div><h1>${hello}</h1><p class="sub" style="margin:0">${new Date().toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"})} · ${todo?`<b style="color:var(--ink)">${todo} thing${todo===1?"":"s"} to do</b>`:"all caught up"}</p></div>
       <div class="spacer"></div>
-      <button class="btn" id="dReport">Monthly report (PDF)</button>
+      <button class="btn" id="dReport">Monthly report</button>
       <button class="btn primary" id="dNew">+ New order</button>
+    </div>
+
+    <div class="lanes">
+      <section class="lane">
+        <header><h3>To pack &amp; send</h3><span class="cnt">${toSend.length}</span></header>
+        <p class="lane-hint">Stick the waybill, add its number, then send it to Domex.</p>
+        ${toSend.length?toSend.slice(0,6).map(o=>laneRow(o, sendAct(o),
+            subOf(o), (o.status==="New"?' <em class="tag new">New</em>':"")+(daysSince(o.date)>=nd?` <em class="tag late">${daysSince(o.date)} days waiting</em>`:""))).join("")+laneMore(toSend.length,"Confirmed")
+          :`<div class="lane-empty">Nothing to pack right now.</div>`}
+      </section>
+
+      <section class="lane">
+        <header><h3>On the way</h3><span class="cnt">${onWay.length}</span></header>
+        <p class="lane-hint">${domexOn()?`Domex checked ${D.lastSync?esc(relTime(D.lastSync)):"soon"} · <a href="#" id="dSync">check now</a>`:"Tap a parcel to see where it is."}</p>
+        ${onWay.length?onWay.slice(0,6).map(o=>laneRow(o, dxChip(o), subOf(o)+(o.domex&&o.domex.at?` · ${esc(relTime(o.domex.at))}`:""))).join("")+laneMore(onWay.length,"Dispatched")
+          :`<div class="lane-empty">No parcels on the road.</div>`}
+      </section>
+
+      <section class="lane${calls.length?" hot":""}">
+        <header><h3>Call these customers</h3><span class="cnt">${calls.length}</span></header>
+        <p class="lane-hint">Domex could not deliver, or the parcel is taking too long.</p>
+        ${calls.length?calls.slice(0,6).map(o=>laneRow(o,
+            `<button class="btn sm icon" data-tel="${esc(o.phone)}" aria-label="Call ${esc(o.customer)}" title="Call ${esc(o.phone)}">${ICON_CALL}</button><button class="btn sm wa" data-wa="${o.id}">${ICON_WA}<span class="wa-t">WhatsApp</span></button>`,
+            `${orderNo(o)} · ${esc(o.phone)} · <span class="why">${dxProblem(o)?esc(o.domex.text):`sent ${daysSince(o.dispatchedDate||o.date)} days ago`}</span>`)).join("")
+          :`<div class="lane-empty">No problems with deliveries.</div>`}
+      </section>
+    </div>
+    ${alerts.map(x=>`<div class="alert ${x.s.status==="Out of stock"?"red":""}"><b>${esc(x.p.name)}</b> — ${x.s.status.toLowerCase()}: ${x.s.available} left. Add stock from the Stock page.</div>`).join("")}
+
+    <div class="row" style="margin-top:30px"><div class="section-title" style="margin:0">Money<span>${monthName(ym)}</span></div><div class="spacer"></div>
+      <input type="month" id="dm" value="${ym}" style="width:170px" aria-label="Month">
+      <div class="seg"><button id="dmThis" class="${ym===thisMonth()?"on":""}">This month</button><button id="dmAll" class="${!ym?"on":""}">All time</button></div>
+    </div>
+    <div class="stats">
+      <div class="stat accent"><div class="k">Orders</div><div class="v">${live.length}</div><div class="s">${delivered.length} delivered · ${returned.length} returned</div></div>
+      <div class="stat"><div class="k">Sales (delivered)</div><div class="v">${money(sales)}</div><div class="s">${pending.length} pending worth ${money(pipeline)}</div></div>
+      <div class="stat ${net<0?"neg":"pos"}"><div class="k">Net profit</div><div class="v">${money(net)}</div><div class="s">after ${money(exps)} expenses</div></div>
+      <div class="stat"><div class="k">COD to collect</div><div class="v">${money(codDue)}</div><div class="s">${dispatched.length} parcel(s) on the way</div></div>
     </div>
 
     <section class="hero">
@@ -1265,22 +1495,6 @@ function renderDashboard(){
       <div class="gauge">${gaugeSVG(pct)}<div class="pct"><b>${pct}%</b><span>of capital back in the business</span></div></div>
     </section>
 
-    ${rem.length?`<div class="remind"><h3>Needs attention <span class="muted">(${rem.length})</span></h3><div class="tablewrap"><table><tbody>
-      ${rem.map(x=>`<tr><td><b>${orderNo(x.o)}</b></td><td>${esc(x.o.customer)}</td><td>${esc(x.o.phone)}</td><td class="muted">${x.why}</td>
-      <td class="actions-cell"><button class="btn sm wa" data-wa="${x.o.id}">${ICON_WA}<span class="wa-t">WhatsApp</span></button> <select class="status s-${x.o.status}" data-st="${x.o.id}">${STATUSES.map(s=>`<option ${s===x.o.status?"selected":""}>${s}</option>`).join("")}</select></td></tr>`).join("")}
-    </tbody></table></div></div>`:""}
-    ${alerts.map(x=>`<div class="alert ${x.s.status==="Out of stock"?"red":""}"><b>${esc(x.p.name)}</b> — ${x.s.status.toLowerCase()}: ${x.s.available} left. Add stock from the Stock page.</div>`).join("")}
-
-    <div class="row" style="margin-top:26px"><div class="section-title" style="margin:0">Sales<span>${monthName(ym)}</span></div><div class="spacer"></div>
-      <input type="month" id="dm" value="${ym}" style="width:170px" aria-label="Month">
-      <div class="seg"><button id="dmThis" class="${ym===thisMonth()?"on":""}">This month</button><button id="dmAll" class="${!ym?"on":""}">All time</button></div>
-    </div>
-    <div class="stats">
-      <div class="stat accent"><div class="k">Orders</div><div class="v">${live.length}</div><div class="s">${delivered.length} delivered · ${returned.length} returned</div></div>
-      <div class="stat"><div class="k">Sales (delivered)</div><div class="v">${money(sales)}</div><div class="s">${pending.length} pending worth ${money(pipeline)}</div></div>
-      <div class="stat ${net<0?"neg":"pos"}"><div class="k">Net profit</div><div class="v">${money(net)}</div><div class="s">after ${money(exps)} expenses</div></div>
-      <div class="stat"><div class="k">COD to collect</div><div class="v">${money(codDue)}</div><div class="s">${dispatched.length} parcel(s) on the way</div></div>
-    </div>
 
     <div class="two-1">
       <div class="panel">
@@ -1297,14 +1511,14 @@ function renderDashboard(){
       </div>
     </div>
 
-    <div class="panel"><div class="row" style="margin-bottom:8px"><h3 style="margin:0">Latest orders</h3><div class="spacer"></div><button class="btn sm" id="dAll">See all orders</button></div>${ordersTable(recent,true)}</div>
   `;
   requestAnimationFrame(()=>requestAnimationFrame(()=>{ const f=$("#gFill"); if(f) f.style.strokeDashoffset = 100-Math.max(0,Math.min(100,pct)); }));
   $("#dm").onchange = e=>{ state.dashMonth = e.target.value; render(); };
   $("#dmThis").onclick = ()=>{ state.dashMonth = thisMonth(); render(); };
   $("#dmAll").onclick = ()=>{ state.dashMonth = ""; render(); };
   $("#dNew").onclick = ()=>openOrder();
-  $("#dAll").onclick = ()=>{ page="orders"; render(); };
+  document.querySelectorAll("[data-goto]").forEach(b=>b.onclick=()=>{ state.orderStatus=b.dataset.goto; page="orders"; render(); });
+  if($("#dSync")) $("#dSync").onclick=async(e)=>{ e.preventDefault(); e.target.textContent="checking…"; try{ await syncDomex(true); }catch(err){ alert(err.message); } render(); };
   $("#dReport").onclick = ()=>monthlyReport(state.dashMonth||thisMonth());
   $("#dSum").onclick = weeklySummary;
   bindOrderRows();
@@ -1313,18 +1527,18 @@ function renderDashboard(){
 /* ================= ORDERS ================= */
 function ordersTable(list, compact){
   if(!list.length) return `<div class="empty"><b>No orders yet</b>Click “+ New order”, or press Ctrl+V with an order screenshot.</div>`;
-  return `<div class="tablewrap"><table><thead><tr>
-    <th>Order</th><th>Customer</th>${compact?"":"<th>Place</th>"}<th class="num">Qty</th><th class="num">Total</th><th>Status</th>${compact?"":"<th>Tracking</th>"}<th></th>
+  return `<div class="tablewrap"><table class="ord"><thead><tr>
+    <th>Order</th><th>Customer</th><th class="num">Qty</th><th class="num">Total</th><th>Status</th>${compact?"":"<th>Tracking</th>"}<th></th>
   </tr></thead><tbody>
-  ${list.map(o=>{ const c=orderCalc(o); return `<tr>
-    <td style="white-space:nowrap"><b>${orderNo(o)}</b><div class="cell2">${esc(o.date)}</div></td>
-    <td><span class="cell1">${esc(o.customer)}</span><div class="cell2">${esc(o.phone)}</div></td>
-    ${compact?"":`<td><span class="cell1">${esc(o.city)||"—"}</span><div class="cell2">${esc(o.district)}</div></td>`}
-    <td class="num">${c.qty}</td><td class="num">${money(c.total)}<div class="cell2">${esc(o.payment)}</div></td>
-    <td><select class="status s-${o.status}" data-st="${o.id}">${STATUSES.map(s=>`<option ${s===o.status?"selected":""}>${s}</option>`).join("")}</select></td>
-    ${compact?"":`<td style="white-space:nowrap">${o.tracking?esc(o.tracking):'<span class="muted">—</span>'}${o.domex?`<div class="cell2 dx-${o.domex.code==="D"||o.domex.code==="PS"?"ok":"go"}">${esc(o.domex.text)}</div>`:(o.domexSent?'<div class="cell2">In Domex</div>':"")}</td>`}
+  ${list.map(o=>{ const c=orderCalc(o); const place=[o.city,o.district].filter((x,i,a)=>x&&a.indexOf(x)===i).join(", "); return `<tr>
+    <td class="c-no" style="white-space:nowrap"><b>${orderNo(o)}</b><div class="cell2">${esc(o.date)}</div></td>
+    <td class="c-cust"><span class="cell1">${esc(o.customer)}</span><div class="cell2">${esc(o.phone)}${place?" · "+esc(place):""}</div></td>
+    <td class="num c-qty">${c.qty}</td><td class="num c-tot">${money(c.total)}<div class="cell2">${esc(o.payment)}${c.qty>1?" · "+c.qty+" pcs":""}</div></td>
+    <td class="c-st"><select class="status s-${o.status}" data-st="${o.id}" aria-label="Status of ${orderNo(o)}">${STATUSES.map(s=>`<option ${s===o.status?"selected":""}>${s}</option>`).join("")}</select></td>
+    ${compact?"":`<td class="c-trk" style="white-space:nowrap">${dxChip(o)}${o.tracking&&dxStep(o)>=0?`<div class="cell2">${esc(o.tracking)}</div>`:""}</td>`}
     <td class="actions-cell">
-      <button class="btn sm wa" data-wa="${o.id}" title="Send a WhatsApp message">${ICON_WA}<span class="wa-t">WhatsApp</span></button>
+      ${canSendDomex(o)?`<button class="btn sm primary" data-dx="${o.id}">Send to Domex</button>`:(domexOn()&&!o.tracking&&["New","Confirmed"].includes(o.status)?`<button class="btn sm" data-addtr="${o.id}">+ Tracking no</button>`:"")}
+      <button class="btn sm wa only-ic" data-wa="${o.id}" title="Send a WhatsApp message" aria-label="WhatsApp">${ICON_WA}<span class="wa-t">WhatsApp</span></button>
       <button class="btn sm" data-edit="${o.id}">Edit</button>
       <button class="btn sm more" data-more="${o.id}" title="Invoice, label, delete" aria-label="More actions">${ICON_MORE}</button>
     </td></tr>`; }).join("")}
@@ -1353,12 +1567,17 @@ function bindOrderRows(){
     saveDB(); toast(orderNo(o)+" → "+o.status); render();
   });
   document.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>openOrder(b.dataset.edit));
+  document.querySelectorAll("[data-dx]").forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); const o=DB.orders.find(x=>x.id===b.dataset.dx); if(o) sendToDomex(o,b); });
+  document.querySelectorAll("[data-trk]").forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); openTracking(b.dataset.trk); });
+  document.querySelectorAll("[data-addtr]").forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); addTracking(b.dataset.addtr); });
+  document.querySelectorAll("[data-tel]").forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); location.href="tel:"+b.dataset.tel; });
+  document.querySelectorAll("[data-open]").forEach(r=>r.onclick=(e)=>{ if(e.target.closest("button,a,select,input")) return; openTracking(r.dataset.open); });
   document.querySelectorAll("[data-wa]").forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); waMenu(b, b.dataset.wa); });
   document.querySelectorAll("[data-more]").forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); const id=b.dataset.more;
     const o=DB.orders.find(x=>x.id===id), dx=domexOn();
-    popMenu(b, `${dx?`<button data-a="dxs">${o.domexSent?"Update in Domex":"Send to Domex"}</button>${o.tracking?'<button data-a="dxc">Check Domex status</button>':""}`:""}<button data-a="inv">Print invoice</button><button data-a="lbl">Print parcel label</button><button data-a="del" style="color:var(--red)">Delete order</button>`, a=>{
+    popMenu(b, `${dx?`<button data-a="dxs">${o.domexSent?"Update in Domex":"Send to Domex"}</button>${o.tracking?'<button data-a="dxc">Where is the parcel?</button>':""}`:""}<button data-a="inv">Print invoice</button><button data-a="lbl">Print parcel label</button><button data-a="del" style="color:var(--red)">Delete order</button>`, a=>{
       if(a==="dxs") sendToDomex(o);
-      if(a==="dxc"){ toast("Checking Domex…"); checkDomexOrder(o).then(d=>{ toast(o.tracking+": "+d.text+(d.at?" ("+niceTime(d.at)+")":"")); render(); }).catch(e=>alert(e.message)); }
+      if(a==="dxc") openTracking(o.id);
       if(a==="inv") printInvoice(id); if(a==="lbl") printLabel(id); if(a==="del") deleteOrder(id); }); });
 }
 function renderOrders(){
@@ -1427,19 +1646,31 @@ function openOrder(id, prefill, imageFile, onSaved){
       <div><label>Delivery — customer pays (Rs.)</label><input type="number" id="f_delivery" value="${esc(v.delivery)}"><div class="hint" id="delHint"></div></div>
       <div><label>Courier cost — we pay (Rs.)</label><input type="number" id="f_courier" value="${esc(v.courierCost)}"></div>
       <div><label>Payment</label><select id="f_payment">${PAYMENTS.map(s=>`<option ${s===v.payment?"selected":""}>${s}</option>`).join("")}</select></div>
-      <div><label>${esc(DB.settings.courier)} tracking no</label><input id="f_tracking" value="${esc(v.tracking)}"></div>
+      <div><label for="f_tracking">${esc(DB.settings.courier)} tracking no</label><input id="f_tracking" value="${esc(v.tracking)}" autocomplete="off" placeholder="${lastTracking(o&&o.id)?"Type the last digits, e.g. "+esc(lastTracking(o&&o.id).slice(-2)):"From the waybill sticker"}"><div class="trk-help" id="trkHelp"></div></div>
       <div><label>Notes</label><input id="f_notes" value="${esc(v.notes)}"></div>
     </div>
     <div class="totalbox" style="margin-top:14px" id="f_total"></div>
     <div id="f_warn" class="hint"></div>
-    <div class="actions"><button class="btn" id="f_cancel">Cancel</button><button class="btn primary" id="f_save">${o?"Save changes":"Add order"}</button></div>`;
+    <div class="actions"><button class="btn" id="f_cancel">Cancel</button>${domexOn()&&!(o&&(o.domexSent||o.domex))?`<button class="btn" id="f_savedx" title="Saves the order, then sends it to Domex">${o?"Save":"Add"} &amp; send to Domex</button>`:""}<button class="btn primary" id="f_save">${o?"Save changes":"Add order"}</button></div>`;
   openModalBg();
   const read = ()=>({
     date:$("#f_date").value||today(), status:$("#f_status").value, customer:$("#f_customer").value.trim(), phone:$("#f_phone").value.trim(), whatsapp:$("#f_whatsapp").value.trim(),
     address:$("#f_address").value.trim(), city:$("#f_city").value.trim(), district:$("#f_district").value, payment:$("#f_payment").value, productId:$("#f_product").value,
     qty:Math.max(1,parseInt($("#f_qty").value)||1), price:num($("#f_price").value), discount:num($("#f_discount").value),
-    delivery:num($("#f_delivery").value), courierCost:num($("#f_courier").value), tracking:$("#f_tracking").value.trim(), notes:$("#f_notes").value.trim()
+    delivery:num($("#f_delivery").value), courierCost:num($("#f_courier").value), tracking:expandTracking($("#f_tracking").value, o&&o.id), notes:$("#f_notes").value.trim()
   });
+  const trkHelp=()=>{
+    const f=$("#f_tracking"), h=$("#trkHelp"), raw=f.value.trim(), full=expandTracking(raw, o&&o.id), nx=nextTracking(o&&o.id);
+    let html="";
+    if(!raw && nx) html=`<button type="button" data-usetr="${esc(nx)}">Use ${esc(nx)}</button><span class="hint" style="margin:0">next after ${esc(lastTracking(o&&o.id))}</span>`;
+    else if(raw && full!==raw.toUpperCase()) html=`<span class="hint" style="margin:0">Will be saved as <b style="color:var(--ink)">${esc(full)}</b></span>`;
+    if(raw && trackingUsed(full, o&&o.id)){ const u=DB.orders.find(x=>x.id!==(o&&o.id) && String(x.tracking||"").toUpperCase()===full); html=`<span class="hint" style="margin:0;color:var(--red)">${esc(full)} is already used for ${esc(orderNo(u))} (${esc(u.customer)})</span>`; }
+    h.innerHTML=html;
+    const b=h.querySelector("[data-usetr]"); if(b) b.onclick=()=>{ f.value=b.dataset.usetr; f.classList.remove("ask"); trkHelp(); upd(); };
+  };
+  $("#f_tracking").addEventListener("input",trkHelp);
+  $("#f_tracking").addEventListener("blur",()=>{ const f=$("#f_tracking"); const full=expandTracking(f.value, o&&o.id); if(full!==f.value){ f.value=full; trkHelp(); } });
+  trkHelp();
   const upd = ()=>{
     const d = read(); const c = orderCalc(d);
     $("#f_total").innerHTML = `<span>Customer pays: <b>${money(c.total)}</b></span><span>Product cost: ${money(c.productCost)}</span><span>Profit on this order: <b>${money(c.profit)}</b></span>`;
@@ -1476,22 +1707,29 @@ function openOrder(id, prefill, imageFile, onSaved){
   drop.addEventListener("dragleave",()=>drop.classList.remove("over"));
   drop.addEventListener("drop",e=>{ e.preventDefault(); drop.classList.remove("over"); const f=[...e.dataTransfer.files].find(f=>f.type.startsWith("image/")); if(f) readScreenshot(f, upd); });
   $("#f_cancel").onclick = closeModal;
-  $("#f_save").onclick = async ()=>{
+  const doSave = async (toDomex)=>{
     const d = read();
     if(!d.customer || !d.phone){ alert("Please enter the customer name and phone number."); return; }
+    if(toDomex && !d.tracking){ alert("Type the Domex tracking number (from the waybill sticker) first."); $("#f_tracking").focus(); return; }
+    if(d.tracking && trackingUsed(d.tracking, o&&o.id) && !confirm(d.tracking+" is already used for another order. Save anyway?")) return;
+    if(d.tracking && d.tracking!==((o&&o.tracking)||"")) d.trackingAt=new Date().toISOString();
+    let saved=o;
     if(o){ Object.assign(o,d); toast("Order "+orderNo(o)+" updated"); }
     else {
       $("#f_save").disabled=true;
       const p = product(d.productId);
       const no = await nextNumber("order");
       const nord={ id:uid(), no, created:new Date().toISOString(), unitCost:p?num(p.cost):0, ...d };
-      DB.orders.push(nord);
+      DB.orders.push(nord); saved=nord;
       if(onSaved) onSaved(nord);
       toast("Order CL-"+String(no).padStart(4,"0")+" added");
       setTimeout(()=>notifyNewOrder(nord), 300);
     }
     saveDB(); closeModal(); render();
+    if(toDomex && saved) setTimeout(()=>sendToDomex(saved), 280);
   };
+  $("#f_save").onclick = ()=>doSave(false);
+  if($("#f_savedx")) $("#f_savedx").onclick = ()=>doSave(true);
   if(imageFile) readScreenshot(imageFile, upd); else setTimeout(()=>$("#f_customer").focus(),50);
 }
 let _closeT=null;
@@ -2013,6 +2251,7 @@ function openPartner(id){
 
 /* ================= WHATSAPP ================= */
 const ICON_MORE = '<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>';
+const ICON_CALL = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1A17 17 0 0 1 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1z"/></svg>';
 const ICON_WA = '<svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.3-.4.8-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6a2.7 2.7 0 0 0 1.8-1.3 2.2 2.2 0 0 0 .2-1.3c-.1-.1-.2-.2-.5-.3z"/></svg>';
 function firstName(n){ const parts=String(n||"").trim().split(/\s+/).filter(w=>!/^(mr|mrs|ms|miss|dr|rev|prof|sir|madam)\.?$/i.test(w)); return parts[0]||String(n||"").trim(); }
 function waNumber(phone){ const p=normPhone(phone); if(p.length===10 && p[0]==="0") return "94"+p.slice(1); return p; }
