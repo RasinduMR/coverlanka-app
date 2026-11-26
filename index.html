@@ -156,6 +156,7 @@
   button.more svg{margin:0}
   .cell1{font-weight:600;white-space:nowrap}
   .cell2{font-size:12px;color:var(--muted);margin-top:2px;white-space:nowrap}
+  .cell2.dx-ok{color:var(--green);font-weight:600} .cell2.dx-go{color:var(--amber);font-weight:600}
   button.more svg{width:16px;height:16px;fill:currentColor}
   .menu hr{border:none;border-top:1px solid var(--line);margin:5px 4px}
   .chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 0}
@@ -733,6 +734,7 @@ async function boot(){
     render();
     if(DB.settings.pinHash) showLock();
     setTimeout(autoDriveBackup, 4000);
+    setTimeout(()=>syncDomex(), 9000);
   });
 }
 /* ================= GOOGLE DRIVE BACKUP =================
@@ -773,8 +775,9 @@ async function autoDriveBackup(){
   catch(e){ console.warn("Drive backup:",e.message); }
   finally{ _autoBk=false; }
 }
-document.addEventListener("visibilitychange",()=>{ if(!document.hidden) setTimeout(autoDriveBackup,3000); });
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden){ setTimeout(autoDriveBackup,3000); setTimeout(()=>syncDomex(),6000); } });
 setInterval(autoDriveBackup, 30*60*1000);
+setInterval(()=>syncDomex(), 20*60*1000);
 /* a safety copy before anything that replaces all the data */
 async function safetyBackup(tag){
   if(driveUrl()){ try{ await driveBackup(tag); return "drive"; }catch(e){ console.warn(e); } }
@@ -919,6 +922,94 @@ function notifyNewOrder(o){
   const place=[o.city,o.district].filter(Boolean)[0]||"";
   sendPush({ title:"New order "+orderNo(o), body:[o.customer, c.qty+" × "+(p?p.name:"raincoat"), money(c.total), place].filter(Boolean).join(" · "), tag:"order-"+o.id, url:"./#orders" })
     .catch(e=>console.warn("Notification:", e.message));
+}
+
+/* ================= DOMEX COURIER =================
+   Orders are sent to Domex, and parcel status is read back, through the
+   Google Drive script — the Domex key and password live only there. */
+const DOMEX_STATUS = { CI:"Waiting for pickup", I:"Received by Domex", SO:"Sent to sorting centre", SCCI:"At sorting centre", M:"On the way",
+  A:"At delivery branch", ATD:"Out for delivery", RS:"Delivery rescheduled", D:"Delivered", PS:"Delivered", HI:"Held at branch", CD:"Removed from Domex" };
+function domexSet(){ const S=DB.settings; S.domex=S.domex||{}; const d=S.domex;
+  if(d.itemType==null) d.itemType=""; if(d.paymentMethod==null) d.paymentMethod="Cash"; if(d.isPaid==null) d.isPaid="No";
+  if(d.autoSync==null) d.autoSync=true; return d; }
+function domexOn(){ return !!driveUrl() && !!domexSet().ready; }
+async function domexApi(op, extra){ return driveCall({ action:"domex", op, ...(extra||{}) }); }
+function domexErr(res){ const d=res&&res.data; if(!d) return "Domex answered "+(res?res.status:"nothing");
+  if(typeof d==="string") return d;
+  if(d.errors) return Object.values(d.errors).flat().join(" "); return d.message||d.title||("Domex answered "+res.status); }
+function domexParcel(o){
+  const S=DB.settings, D=domexSet(), c=orderCalc(o), p=product(o.productId);
+  const kg=Math.max(0.1, itemsWeight([{productId:o.productId,qty:c.qty}])||1);
+  const due=new Date(Date.now()+7*864e5);
+  const ph2=o.whatsapp && normPhone(o.whatsapp)!==normPhone(o.phone) ? o.whatsapp : o.phone;
+  return { trackingNo:o.tracking, refNo:orderNo(o),
+    paymentMethod:D.paymentMethod, isPaid:o.payment==="COD"?D.isPaid:"Yes", exchange:"No",
+    beforeDelivered:due.toISOString(), itemType:D.itemType,
+    senderName:D.senderName||S.businessName||"CoverLanka", senderAddress:D.senderAddress||S.address||"Matara", senderContactNo:String(D.senderPhone||S.phone||"").replace(/\s/g,"").slice(0,15),
+    receiverName:o.customer, receiverAddress:o.address||o.city, receiverCity:o.city||o.district, receiverContactNo1:o.phone, receiverContactNo2:ph2,
+    packageDesc:(p?p.name:"Raincoat")+" x "+c.qty, weight:kg, remark:"", createdUser:S.businessName||"CoverLanka", keyValue:0,
+    totalCharges:Math.max(1, Math.round(c.total-num(o.delivery))),   // parcel value — Domex adds its delivery fee on top
+    noOfPcs:1 };
+}
+function domexProblems(o){ const D=domexSet(), x=[];
+  if(!o.tracking) x.push("Add the Domex tracking number (from the waybill sticker) first.");
+  else if(!/^[A-Za-z0-9\-]{3,25}$/.test(o.tracking)) x.push("The tracking number looks wrong.");
+  if(!o.address) x.push("Add the customer’s address."); if(!o.city && !o.district) x.push("Add the city.");
+  if(!o.phone) x.push("Add the phone number.");
+  if(!D.itemType) x.push("Domex item type is not set (Settings → Domex).");
+  if(!(D.senderPhone||DB.settings.phone)) x.push("Add our phone number in Settings → Domex.");
+  return x; }
+async function sendToDomex(o, btn){
+  const prob=domexProblems(o); if(prob.length){ alert("Can’t send "+orderNo(o)+" to Domex yet:\n\n• "+prob.join("\n• ")); return false; }
+  const P=domexParcel(o);
+  if(!confirm(`Send ${orderNo(o)} to Domex?\n\n${P.receiverName}\n${P.receiverAddress}, ${P.receiverCity}\n${P.receiverContactNo1}\n\nTracking no: ${P.trackingNo}\nParcel value: ${money(P.totalCharges)} (Domex adds the delivery fee)\nWeight: ${P.weight} kg`)) return false;
+  if(btn){ btn.disabled=true; btn.innerHTML='<span class="spin"></span>Sending…'; }
+  try{
+    const r=(await domexApi(o.domexSent?"update":"create",{ trackingNo:P.trackingNo, parcel:P })).result;
+    const code=r.data&&r.data.errorCode;
+    if(r.status===200 && (code==null||code===200)){ o.domexSent=new Date().toISOString(); toast(orderNo(o)+" sent to Domex"); }
+    else if(code===218){ o.domexSent=o.domexSent||new Date().toISOString(); toast(orderNo(o)+" is already in Domex"); }
+    else throw new Error(domexErr(r));
+    if(["New","Confirmed"].includes(o.status)){ o.status="Dispatched"; o.dispatchedDate=today(); }
+    saveDB(); render(); return true;
+  }catch(e){ alert("Domex did not accept "+orderNo(o)+":\n\n"+e.message); if(btn){ btn.disabled=false; btn.textContent="Send to Domex"; } return false; }
+}
+function domexLatest(arr){ if(!Array.isArray(arr)||!arr.length) return null;
+  return [...arr].sort((a,b)=>String(a.statusDate).localeCompare(String(b.statusDate))).pop(); }
+function applyDomexStatus(o, arr){
+  const last=domexLatest(arr); if(!last) return false;
+  const code=String(last.statusCode||"").toUpperCase();
+  const prev=o.domex&&o.domex.code;
+  o.domex={ code, text:DOMEX_STATUS[code]||last.status||code, at:last.statusDate, checked:new Date().toISOString() };
+  let changed = prev!==code;
+  if((code==="D"||code==="PS") && o.status==="Dispatched"){ o.status="Delivered"; o.deliveredDate=String(last.statusDate||"").slice(0,10)||today(); changed=true; }
+  else if(/return/i.test(String(last.status)) && o.status==="Dispatched"){ o.status="Returned"; changed=true; }
+  return changed;
+}
+async function checkDomexOrder(o){
+  const r=(await domexApi("status",{ trackingNo:o.tracking })).result;
+  if(r.status===404) throw new Error("Domex has no record of "+o.tracking+" yet.");
+  if(r.status!==200) throw new Error(domexErr(r));
+  applyDomexStatus(o, r.data); saveDB(); return o.domex;
+}
+let _dxSync=false;
+async function syncDomex(force){
+  const D=domexSet();
+  if(_dxSync||!domexOn()||!D.autoSync&&!force||!CLOUD.ready||!navigator.onLine||document.hidden&&!force) return;
+  if(!force && D.lastSync && Date.now()-new Date(D.lastSync).getTime() < 2*3600e3) return;   // the team checks at most every 2 hours
+  const list=DB.orders.filter(o=>o.status==="Dispatched" && o.tracking && /^[A-Za-z0-9\-]{3,25}$/.test(o.tracking)).slice(0,40);
+  _dxSync=true;
+  try{
+    D.lastSync=new Date().toISOString(); saveDB();
+    if(!list.length) return 0;
+    const res=(await domexApi("statusMany",{ trackingNos:list.map(o=>o.tracking) })).results||{};
+    let n=0, delivered=[];
+    list.forEach(o=>{ const r=res[o.tracking]; if(r&&r.status===200){ const was=o.status; if(applyDomexStatus(o,r.data)) n++; if(was!==o.status && o.status==="Delivered") delivered.push(o); } });
+    if(n){ saveDB(); render(); }
+    if(delivered.length) toast(delivered.length===1?orderNo(delivered[0])+" was delivered":delivered.length+" parcels were delivered");
+    return n;
+  }catch(e){ console.warn("Domex sync:", e.message); if(force) throw e; }
+  finally{ _dxSync=false; }
 }
 
 async function signOutTeam(){ if(!confirm("Sign out of CoverLanka on this device?")) return; await window.FB.signOut(CLOUD.auth); }
@@ -1227,7 +1318,7 @@ function ordersTable(list, compact){
     ${compact?"":`<td><span class="cell1">${esc(o.city)||"—"}</span><div class="cell2">${esc(o.district)}</div></td>`}
     <td class="num">${c.qty}</td><td class="num">${money(c.total)}<div class="cell2">${esc(o.payment)}</div></td>
     <td><select class="status s-${o.status}" data-st="${o.id}">${STATUSES.map(s=>`<option ${s===o.status?"selected":""}>${s}</option>`).join("")}</select></td>
-    ${compact?"":`<td style="white-space:nowrap">${o.tracking?esc(o.tracking):'<span class="muted">—</span>'}</td>`}
+    ${compact?"":`<td style="white-space:nowrap">${o.tracking?esc(o.tracking):'<span class="muted">—</span>'}${o.domex?`<div class="cell2 dx-${o.domex.code==="D"||o.domex.code==="PS"?"ok":"go"}">${esc(o.domex.text)}</div>`:(o.domexSent?'<div class="cell2">In Domex</div>':"")}</td>`}
     <td class="actions-cell">
       <button class="btn sm wa" data-wa="${o.id}" title="Send a WhatsApp message">${ICON_WA}<span class="wa-t">WhatsApp</span></button>
       <button class="btn sm" data-edit="${o.id}">Edit</button>
@@ -1260,7 +1351,10 @@ function bindOrderRows(){
   document.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>openOrder(b.dataset.edit));
   document.querySelectorAll("[data-wa]").forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); waMenu(b, b.dataset.wa); });
   document.querySelectorAll("[data-more]").forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); const id=b.dataset.more;
-    popMenu(b, `<button data-a="inv">Print invoice</button><button data-a="lbl">Print parcel label</button><button data-a="del" style="color:var(--red)">Delete order</button>`, a=>{
+    const o=DB.orders.find(x=>x.id===id), dx=domexOn();
+    popMenu(b, `${dx?`<button data-a="dxs">${o.domexSent?"Update in Domex":"Send to Domex"}</button>${o.tracking?'<button data-a="dxc">Check Domex status</button>':""}`:""}<button data-a="inv">Print invoice</button><button data-a="lbl">Print parcel label</button><button data-a="del" style="color:var(--red)">Delete order</button>`, a=>{
+      if(a==="dxs") sendToDomex(o);
+      if(a==="dxc"){ toast("Checking Domex…"); checkDomexOrder(o).then(d=>{ toast(o.tracking+": "+d.text+(d.at?" ("+niceTime(d.at)+")":"")); render(); }).catch(e=>alert(e.message)); }
       if(a==="inv") printInvoice(id); if(a==="lbl") printLabel(id); if(a==="del") deleteOrder(id); }); });
 }
 function renderOrders(){
@@ -2170,6 +2264,21 @@ function renderSettings(){
       <div id="pin_msg"></div>
     </div>
 
+    <div class="panel" id="domexPanel"><h3>Domex</h3>
+      <p class="hint" style="margin-top:0">Send orders to Domex straight from the app, and see each parcel’s Domex status. Orders change to <b>Delivered</b> by themselves when Domex delivers them. The Domex key and password are kept in the Google Drive script, not in the app.</p>
+      <div class="grid2">
+        <div><label for="dx_sn">Sender name</label><input id="dx_sn" value="${esc(domexSet().senderName||S.businessName)}"></div>
+        <div><label for="dx_sp">Sender phone</label><input id="dx_sp" value="${esc(domexSet().senderPhone||S.phone)}" placeholder="07XXXXXXXX"></div>
+        <div class="full"><label for="dx_sa">Sender address</label><input id="dx_sa" value="${esc(domexSet().senderAddress||S.address)}"></div>
+        <div><label for="dx_it">Item type code (up to 4 letters)</label><input id="dx_it" maxlength="4" value="${esc(domexSet().itemType)}" placeholder="Filled in by the test"></div>
+        <div><label for="dx_pm">Payment method sent to Domex</label><input id="dx_pm" value="${esc(domexSet().paymentMethod)}"></div>
+        <div><label for="dx_ip">“Is paid” for cash-on-delivery parcels</label><select id="dx_ip"><option ${domexSet().isPaid==="No"?"selected":""}>No</option><option ${domexSet().isPaid==="Yes"?"selected":""}>Yes</option></select></div>
+        <div style="align-self:end"><label class="chk"><input type="checkbox" id="dx_auto" ${domexSet().autoSync?"checked":""}> Check parcel status every 2 hours</label></div>
+      </div>
+      <div class="row" style="margin-top:12px"><button class="btn" id="dx_test">Test the Domex connection</button>${domexOn()?'<button class="btn" id="dx_sync">Check all parcels now</button>':""}<div class="spacer"></div><button class="btn primary" id="dx_save">Save Domex settings</button></div>
+      <div id="dx_msg" class="hint">${window._dxMsg?window._dxMsg:domexOn()?"Connected"+(domexSet().lastSync?" · parcels last checked "+esc(niceTime(domexSet().lastSync)):""):"Not connected yet"}</div>
+    </div>
+
     <div class="panel" id="notifPanel"><h3>Notifications</h3>
       <p class="hint" style="margin-top:0">Get a notification on this phone or laptop every time someone in the team adds an order.</p>
       <div id="np_state" class="muted"><span class="spin"></span>Checking…</div>
@@ -2211,6 +2320,32 @@ function renderSettings(){
     </div>`;
 
   $("#so_btn").onclick=signOutTeam;
+  const dxRead=()=>{ const D=domexSet(); Object.assign(D,{ senderName:$("#dx_sn").value.trim(), senderPhone:$("#dx_sp").value.trim(), senderAddress:$("#dx_sa").value.trim(),
+    itemType:$("#dx_it").value.trim().slice(0,4), paymentMethod:$("#dx_pm").value.trim()||"Cash", isPaid:$("#dx_ip").value, autoSync:$("#dx_auto").checked }); return D; };
+  $("#dx_save").onclick=()=>{ dxRead(); saveDB(); toast("Domex settings saved"); render(); };
+  $("#dx_test").onclick=async()=>{
+    const D=dxRead(), m=$("#dx_msg"), b=$("#dx_test"); b.disabled=true; m.innerHTML='<span class="spin"></span>Signing in to Domex…';
+    const sample=[...DB.orders].sort((a,c)=>a.no-c.no).find(o=>o.tracking && ["Dispatched","Delivered"].includes(o.status));
+    try{
+      const r=await domexApi("test",{ trackingNo:sample?sample.tracking:"" });
+      D.ready=true; let html="✔ Signed in to Domex.";
+      const w=r.waybill;
+      if(w && w.status===200 && w.data && typeof w.data==="object"){
+        const x=w.data; D.lastSample={ itemType:x.itemType, paymentMethod:x.paymentMethod, isPaid:x.isPaid, value:x.value };
+        html+=`<br>Read parcel <b>${esc(sample.tracking)}</b> (${esc(orderNo(sample))}) from Domex: item type <b>${esc(x.itemType)}</b> · payment <b>${esc(x.paymentMethod)}</b> · is paid <b>${esc(x.isPaid)}</b> · value <b>${esc(x.value)}</b>.`;
+        if(x.itemType && String(x.itemType).length<=4 && !D.itemType){ D.itemType=String(x.itemType); $("#dx_it").value=D.itemType; }
+        if(x.paymentMethod){ D.paymentMethod=String(x.paymentMethod); $("#dx_pm").value=D.paymentMethod; }
+        if(x.isPaid){ D.isPaid=String(x.isPaid)==="Yes"?"Yes":"No"; $("#dx_ip").value=D.isPaid; }
+        html+=" These were filled in below to match the parcels you entered on the Domex website.";
+      } else if(sample) html+=`<br>Domex could not find parcel ${esc(sample.tracking)}: ${esc(domexErr(w))}`;
+      window._dxMsg=html; saveDB(); $("#dx_msg").innerHTML=html;
+      if(!$("#dx_sync")){ const sb=document.createElement("button"); sb.className="btn"; sb.id="dx_sync"; sb.textContent="Check all parcels now"; b.after(sb); sb.onclick=dxSyncNow; }
+    }catch(e){ window._dxMsg='<span style="color:var(--red)">'+esc(e.message)+'</span>'; $("#dx_msg").innerHTML=window._dxMsg; }
+    if($("#dx_test")) $("#dx_test").disabled=false;
+  };
+  const dxSyncNow=async()=>{ const m=$("#dx_msg"); m.innerHTML='<span class="spin"></span>Checking parcels…';
+    try{ const n=await syncDomex(true); toast(n?n+" parcel"+(n===1?"":"s")+" updated":"All parcels checked"); render(); }catch(e){ m.innerHTML='<span style="color:var(--red)">'+esc(e.message)+'</span>'; } };
+  if($("#dx_sync")) $("#dx_sync").onclick=dxSyncNow;
   $("#th_l").onclick=()=>{ S.theme="light"; saveDB(); applyTheme(true); render(); };
   $("#th_d").onclick=()=>{ S.theme="dark"; saveDB(); applyTheme(true); render(); };
   $("#s_save").onclick=()=>{

@@ -51,6 +51,7 @@ function doPost(e) {
       const byId = {}; msgs.forEach((m, i) => byId[m.id] = res[i].getResponseCode());
       return out({ ok: true, results: (req.messages || []).map(m => byId[m.id] || 400) });
     }
+    if (req.action === "domex") return out(domex(req));
     return out({ ok: false, error: "Unknown action" });
   } catch (err) {
     return out({ ok: false, error: String(err && err.message || err) });
@@ -94,6 +95,98 @@ function prune(folder) {
 }
 
 function out(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
+
+/* ===================== Domex courier API =====================
+   The Domex API key, username and password are kept ONLY in this script's
+   Script properties (Project Settings → Script properties):
+     DOMEX_API_KEY   DOMEX_USER   DOMEX_PASS
+   They are never sent to the app or written to any file.            */
+const DOMEX_BASE = "https://www.connectmesecurego.com/api/";
+
+function domexCreds() {
+  const p = PropertiesService.getScriptProperties();
+  const c = { key: p.getProperty("DOMEX_API_KEY"), user: p.getProperty("DOMEX_USER"), pass: p.getProperty("DOMEX_PASS") };
+  if (!c.key || !c.user || !c.pass) throw new Error("Domex is not set up yet — add DOMEX_API_KEY, DOMEX_USER and DOMEX_PASS in the script's Script properties");
+  return c;
+}
+
+function domexToken(fresh) {
+  const cache = CacheService.getScriptCache();
+  if (!fresh) { const t = cache.get("domexToken"); if (t) return t; }
+  const c = domexCreds();
+  const r = UrlFetchApp.fetch(DOMEX_BASE + "Token/access-token-v-4-1", {
+    method: "post", contentType: "application/json", muteHttpExceptions: true,
+    headers: { "x-api-key": c.key, accept: "*/*" },
+    payload: JSON.stringify({ userName: c.user, password: c.pass })
+  });
+  let j = {}; try { j = JSON.parse(r.getContentText()); } catch (e) {}
+  if (r.getResponseCode() !== 200 || !j.token) throw new Error("Domex sign-in failed (" + r.getResponseCode() + ") — check the Domex username, password and API key");
+  let ttl = 3600;                                   // keep the token until shortly before it expires
+  try { const exp = JSON.parse(Utilities.newBlob(Utilities.base64DecodeWebSafe(j.token.split(".")[1])).getDataAsString()).exp;
+        if (exp) ttl = Math.floor(exp - Date.now() / 1000 - 120); } catch (e) {}
+  ttl = Math.max(60, Math.min(21600, ttl));
+  cache.put("domexToken", j.token, ttl);
+  return j.token;
+}
+
+function domexReq(method, path, query, body, token) {
+  const c = domexCreds();
+  const qs = query ? "?" + Object.keys(query).map(k => k + "=" + encodeURIComponent(query[k])).join("&") : "";
+  const o = { method: method, muteHttpExceptions: true, headers: { "x-api-key": c.key, accept: "*/*", Authorization: "Bearer " + token } };
+  if (body) { o.contentType = "application/json"; o.payload = JSON.stringify(body); }
+  return { url: DOMEX_BASE + path + qs, opts: o };
+}
+
+function domexParse(r) {
+  let data = null; const txt = r.getContentText();
+  try { data = JSON.parse(txt); } catch (e) { data = txt ? String(txt).slice(0, 300) : null; }
+  return { status: r.getResponseCode(), data: data };
+}
+
+/* one call, signing in again once if the saved token was refused */
+function domexCall(method, path, query, body) {
+  let t = domexToken(false);
+  let q = domexReq(method, path, query, body, t);
+  let r = UrlFetchApp.fetch(q.url, q.opts);
+  if (r.getResponseCode() === 401) { t = domexToken(true); q = domexReq(method, path, query, body, t); r = UrlFetchApp.fetch(q.url, q.opts); }
+  return domexParse(r);
+}
+
+const DOMEX_FIELDS = ["trackingNo","refNo","paymentMethod","exchange","isPaid","beforeDelivered","itemType","senderName","senderAddress",
+  "senderContactNo","receiverName","receiverAddress","receiverCity","receiverContactNo1","receiverContactNo2","packageDesc","weight",
+  "remark","createdUser","keyValue","totalCharges","noOfPcs"];
+
+function domex(req) {
+  const tn = String(req.trackingNo || "").trim();
+  const needTn = () => { if (!/^[A-Za-z0-9\-]{3,25}$/.test(tn)) throw new Error("Bad tracking number"); };
+  const clean = p => { const o = {}; DOMEX_FIELDS.forEach(k => { if (p && p[k] !== undefined && p[k] !== null) o[k] = p[k]; }); return o; };
+
+  if (req.op === "test") { domexToken(true); const res = { ok: true, signedIn: true };
+    if (tn) { needTn(); res.waybill = domexCall("get", "CustomerInwards/getCustomerWayBillDetails", { trackingNo: tn }); }
+    return res; }
+  if (req.op === "waybill") { needTn(); return { ok: true, result: domexCall("get", "CustomerInwards/getCustomerWayBillDetails", { trackingNo: tn }) }; }
+  if (req.op === "status") { needTn(); return { ok: true, result: domexCall("get", "CustomerInwards/getCustomerStatusDetails", { trackingNo: tn }) }; }
+  if (req.op === "statusMany") {
+    const list = (req.trackingNos || []).map(String).filter(x => /^[A-Za-z0-9\-]{3,25}$/.test(x)).slice(0, 40);
+    if (!list.length) return { ok: true, results: {} };
+    let t = domexToken(false);
+    let rs = UrlFetchApp.fetchAll(list.map(x => { const q = domexReq("get", "CustomerInwards/getCustomerStatusDetails", { trackingNo: x }, null, t); q.opts.url = q.url; return q.opts; }));
+    if (rs.some(r => r.getResponseCode() === 401)) { t = domexToken(true);
+      rs = UrlFetchApp.fetchAll(list.map(x => { const q = domexReq("get", "CustomerInwards/getCustomerStatusDetails", { trackingNo: x }, null, t); q.opts.url = q.url; return q.opts; })); }
+    const results = {}; list.forEach((x, i) => results[x] = domexParse(rs[i]));
+    return { ok: true, results: results };
+  }
+  if (req.op === "create" || req.op === "update") {
+    const p = clean(req.parcel); if (String(p.trackingNo || "") !== tn) throw new Error("Tracking number mismatch"); needTn();
+    return { ok: true, result: domexCall(req.op === "create" ? "post" : "put",
+      req.op === "create" ? "CustomerInwards/setCustomerDataEntry" : "CustomerInwards/updateCustomerDataEntry", null, p) };
+  }
+  if (req.op === "delete") { needTn(); return { ok: true, result: domexCall("delete", "CustomerInwards/DeleteCustomerDataEntry", { trackingNo: tn }) }; }
+  throw new Error("Unknown Domex action");
+}
+
+/* Run this from the editor after adding the Script properties, to check the Domex sign-in. */
+function testDomex() { domexToken(true); Logger.log("Domex sign-in works ✔"); }
 
 /* Run this once from the editor to give the script permission to use Drive. */
 function setup() { const f = getFolder(); Logger.log("Backups go to: " + f.getUrl()); }
