@@ -948,7 +948,7 @@ function domexParcel(o){
     senderName:D.senderName||S.businessName||"CoverLanka", senderAddress:D.senderAddress||S.address||"Matara", senderContactNo:String(D.senderPhone||S.phone||"").replace(/\s/g,"").slice(0,15),
     receiverName:o.customer, receiverAddress:o.address||o.city, receiverCity:o.city||o.district, receiverContactNo1:o.phone, receiverContactNo2:ph2,
     packageDesc:(p?p.name:"Raincoat")+" x "+c.qty, weight:kg, remark:"", createdUser:S.businessName||"CoverLanka", keyValue:0,
-    totalCharges:Math.max(1, Math.round(c.total-num(o.delivery))),   // parcel value — Domex adds its delivery fee on top
+    totalCharges:Math.max(1, Math.round(c.total)),   // the full amount Domex collects (the API does not add a delivery fee)
     noOfPcs:1 };
 }
 function domexProblems(o){ const D=domexSet(), x=[];
@@ -962,7 +962,7 @@ function domexProblems(o){ const D=domexSet(), x=[];
 async function sendToDomex(o, btn){
   const prob=domexProblems(o); if(prob.length){ alert("Can’t send "+orderNo(o)+" to Domex yet:\n\n• "+prob.join("\n• ")); return false; }
   const P=domexParcel(o);
-  if(!confirm(`Send ${orderNo(o)} to Domex?\n\n${P.receiverName}\n${P.receiverAddress}, ${P.receiverCity}\n${P.receiverContactNo1}\n\nTracking no: ${P.trackingNo}\nParcel value: ${money(P.totalCharges)} (Domex adds the delivery fee)\nWeight: ${P.weight} kg`)) return false;
+  if(!confirm(`Send ${orderNo(o)} to Domex?\n\n${P.receiverName}\n${P.receiverAddress}, ${P.receiverCity}\n${P.receiverContactNo1}\n\nTracking no: ${P.trackingNo}\nDomex collects: ${money(P.totalCharges)}\nWeight: ${P.weight} kg`)) return false;
   if(btn){ btn.disabled=true; btn.innerHTML='<span class="spin"></span>Sending…'; }
   try{
     const r=(await domexApi(o.domexSent?"update":"create",{ trackingNo:P.trackingNo, parcel:P })).result;
