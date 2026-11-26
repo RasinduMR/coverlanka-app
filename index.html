@@ -294,7 +294,7 @@
   .lrow.tap{cursor:pointer;border-radius:8px}
   .lrow.tap:hover{background:var(--panel-2)}
   .lrow .who{flex:1;min-width:0}
-  .lrow .who b{display:block;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .lrow .who b{display:block;font-weight:700}
   .lrow .who span{display:block;font-size:12px;color:var(--muted);margin-top:2px}
   .lrow .act{display:flex;gap:6px;flex-shrink:0;align-items:center}
   .lrow .why{color:var(--red);font-weight:700}
@@ -373,6 +373,16 @@
     table.resp.ord td.actions-cell:has(.primary,[data-addtr]) button.wa svg{margin:0!important}
     table.resp.ord td .tdv{text-align:left}
   }
+
+  /* ---------- message of the day ---------- */
+  .motd{position:relative;display:flex;gap:14px;align-items:flex-start;background:linear-gradient(120deg,var(--brand) 0%,#ff8a3d 100%);color:#fff;border-radius:var(--r-l);padding:20px 22px;margin:0 0 16px;box-shadow:0 14px 34px -16px rgba(254,95,3,.7)}
+  .motd-txt{flex:1;font-family:"Outfit","Sinhala",sans-serif;font-size:20px;font-weight:600;line-height:1.45;white-space:normal}
+  .motd-edit{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:99px;padding:5px 12px;font:700 12px inherit;font-family:inherit;cursor:pointer;flex-shrink:0}
+  .motd-edit:hover{background:rgba(255,255,255,.28)}
+  .motd-add{display:block;width:100%;text-align:left;background:none;border:1.5px dashed var(--line-2);color:var(--muted);border-radius:var(--r-m);padding:11px 14px;margin:0 0 14px;font:600 13px inherit;font-family:inherit;cursor:pointer}
+  .motd-add:hover{border-color:var(--brand);color:var(--brand-ink)}
+  html[data-theme="dark"] .motd{color:#111} html[data-theme="dark"] .motd-edit{color:#111;border-color:rgba(0,0,0,.25);background:rgba(0,0,0,.08)}
+  @media (max-width:760px){ .motd{padding:16px 16px;border-radius:20px} .motd-txt{font-size:17px} }
   @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 
   /* ---------- print ---------- */
@@ -1382,6 +1392,22 @@ function stockRunway(){
   const perDay = sold14/14; return { perDay, days: Math.floor(avail/perDay), avail };
 }
 
+/* ================= TEAM MESSAGE OF THE DAY ================= */
+function editMotd(){
+  const m=DB.settings.motd||{}; const cur=(m.text&&(m.until||m.date)>=today())?m.text:"";
+  modalKind="motd";
+  $("#modal").innerHTML=`<h2>Message for the team</h2>
+    <p class="hint" style="margin-top:0">Shows at the top of the dashboard for everyone who opens the app.</p>
+    <textarea id="mo_t" rows="4" maxlength="400" placeholder="E.g. අද ලොකු දවසක් — හැම order එකක්ම අද යවමු 💪">${esc(cur)}</textarea>
+    <label for="mo_d" style="margin-top:12px">Show it until</label><input type="date" id="mo_d" value="${esc(m.until&&m.until>=today()?m.until:today())}" min="${today()}" style="max-width:220px">
+    <div class="actions">${cur?'<button class="btn danger" id="mo_x">Remove</button>':""}<button class="btn" id="mo_c">Cancel</button><button class="btn primary" id="mo_s">Show to the team</button></div>`;
+  openModalBg(); setTimeout(()=>$("#mo_t").focus(),60);
+  $("#mo_c").onclick=closeModal;
+  if($("#mo_x")) $("#mo_x").onclick=()=>{ DB.settings.motd={text:"",date:today()}; saveDB(); closeModal(); render(); };
+  $("#mo_s").onclick=()=>{ const t=$("#mo_t").value.trim(); if(!t){ $("#mo_t").focus(); return; }
+    DB.settings.motd={ text:t, date:today(), until:$("#mo_d").value||today() }; saveDB(); closeModal(); toast("Message shown on the dashboard"); render(); };
+}
+
 /* ================= DASHBOARD ================= */
 function gaugeSVG(pct){
   // the logo's swoosh as a progress arc
@@ -1442,6 +1468,9 @@ function renderDashboard(){
       <button class="btn primary" id="dNew">+ New order</button>
     </div>
 
+    ${(()=>{ const m=DB.settings.motd; const on=m&&m.text&&(m.until||m.date)>=today();
+      return on?`<section class="motd"><div class="motd-txt">${esc(m.text).replace(/\n/g,"<br>")}</div><button class="motd-edit" id="motdEdit" aria-label="Change today’s message" title="Change today’s message">Edit</button></section>`
+        :`<button class="motd-add" id="motdEdit">+ Write a message for the team today</button>`; })()}
     <div class="lanes">
       <section class="lane">
         <header><h3>To pack &amp; send</h3><span class="cnt">${toSend.length}</span></header>
@@ -1517,6 +1546,7 @@ function renderDashboard(){
   $("#dmThis").onclick = ()=>{ state.dashMonth = thisMonth(); render(); };
   $("#dmAll").onclick = ()=>{ state.dashMonth = ""; render(); };
   $("#dNew").onclick = ()=>openOrder();
+  $("#motdEdit").onclick = editMotd;
   document.querySelectorAll("[data-goto]").forEach(b=>b.onclick=()=>{ state.orderStatus=b.dataset.goto; page="orders"; render(); });
   if($("#dSync")) $("#dSync").onclick=async(e)=>{ e.preventDefault(); e.target.textContent="checking…"; try{ await syncDomex(true); }catch(err){ alert(err.message); } render(); };
   $("#dReport").onclick = ()=>monthlyReport(state.dashMonth||thisMonth());
