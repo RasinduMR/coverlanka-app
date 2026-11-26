@@ -928,7 +928,7 @@ function notifyNewOrder(o){
    Orders are sent to Domex, and parcel status is read back, through the
    Google Drive script — the Domex key and password live only there. */
 const DOMEX_STATUS = { CI:"Waiting for pickup", I:"Received by Domex", SO:"Sent to sorting centre", SCCI:"At sorting centre", M:"On the way",
-  A:"At delivery branch", ATD:"Out for delivery", RS:"Delivery rescheduled", D:"Delivered", PS:"Delivered", HI:"Held at branch", CD:"Removed from Domex" };
+  A:"At delivery branch", ATD:"Out for delivery", RS:"Delivery rescheduled", CIU:"Details updated", CC:"Collected by Domex", D:"Delivered", PS:"Delivered", HI:"Held at branch", CD:"Removed from Domex" };
 function domexSet(){ const S=DB.settings; S.domex=S.domex||{}; const d=S.domex;
   if(d.itemType==null) d.itemType=""; if(d.paymentMethod==null) d.paymentMethod="Cash"; if(d.isPaid==null) d.isPaid="No";
   if(d.autoSync==null) d.autoSync=true; return d; }
@@ -967,7 +967,11 @@ async function sendToDomex(o, btn){
   try{
     const r=(await domexApi(o.domexSent?"update":"create",{ trackingNo:P.trackingNo, parcel:P })).result;
     const code=r.data&&r.data.errorCode;
-    if(r.status===200 && (code==null||code===200)){ o.domexSent=new Date().toISOString(); toast(orderNo(o)+" sent to Domex"); }
+    if(r.status===200 && (code==null||code===200)){ o.domexSent=new Date().toISOString(); toast(orderNo(o)+" sent to Domex");
+      try{ const w=(await domexApi("waybill",{ trackingNo:P.trackingNo })).result;      // read back what Domex will collect
+        if(w.status===200 && w.data && w.data.value!=null){ o.domexValue=num(w.data.value);
+          const tot=Math.round(orderCalc(o).total);
+          if(Math.round(o.domexValue)!==tot) setTimeout(()=>alert(`${orderNo(o)} is in Domex.\n\nDomex shows Rs. ${o.domexValue.toLocaleString("en-US")} for this parcel, but the order total in the app is ${money(tot)}. Check the amount in the Domex portal.`),300); } }catch(e){} }
     else if(code===218){ o.domexSent=o.domexSent||new Date().toISOString(); toast(orderNo(o)+" is already in Domex"); }
     else throw new Error(domexErr(r));
     if(["New","Confirmed"].includes(o.status)){ o.status="Dispatched"; o.dispatchedDate=today(); }
@@ -2333,7 +2337,8 @@ function renderSettings(){
       if(w && w.status===200 && w.data && typeof w.data==="object"){
         const x=w.data; D.lastSample={ itemType:x.itemType, paymentMethod:x.paymentMethod, isPaid:x.isPaid, value:x.value };
         html+=`<br>Read parcel <b>${esc(sample.tracking)}</b> (${esc(orderNo(sample))}) from Domex: item type <b>${esc(x.itemType)}</b> · payment <b>${esc(x.paymentMethod)}</b> · is paid <b>${esc(x.isPaid)}</b> · value <b>${esc(x.value)}</b>.`;
-        if(x.itemType && String(x.itemType).length<=4 && !D.itemType){ D.itemType=String(x.itemType); $("#dx_it").value=D.itemType; }
+        const code=({parcel:"PSL"})[String(x.itemType||"").toLowerCase()] || (String(x.itemType||"").length<=4?String(x.itemType):"");
+        if(code && !D.itemType){ D.itemType=code; $("#dx_it").value=code; }
         if(x.paymentMethod){ D.paymentMethod=String(x.paymentMethod); $("#dx_pm").value=D.paymentMethod; }
         if(x.isPaid){ D.isPaid=String(x.isPaid)==="Yes"?"Yes":"No"; $("#dx_ip").value=D.isPaid; }
         html+=" These were filled in below to match the parcels you entered on the Domex website.";
