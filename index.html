@@ -1447,6 +1447,7 @@ function dayWord(d){ const n=Math.round((new Date(d+"T00:00:00")-new Date(today(
   if(n<7) return new Date(d+"T00:00:00").toLocaleDateString("en-GB",{weekday:"long"});
   return new Date(d+"T00:00:00").toLocaleDateString("en-GB",{day:"numeric",month:"short"}); }
 
+function dayWordIn(d){ const w=dayWord(d); return /^\d/.test(w)?w:w.toLowerCase(); }   // for use inside a sentence
 function remindersCard(){
   const due=remindersDue(), next=remindersUpcoming();
   const row=r=>`<div class="rrow" data-rid="${r.id}">
@@ -1472,7 +1473,7 @@ function bindReminderCard(){
   document.querySelectorAll("[data-rlater]").forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); const r=DB.reminders.find(x=>x.id===b.dataset.rlater); if(!r) return;
     popMenu(b, `<button data-a="1">Tomorrow</button><button data-a="3">In 3 days</button><button data-a="7">Next week</button><button data-a="e">Pick a day…</button>`, a=>{
       if(a==="e"){ openReminder(r.id); return; }
-      const d=new Date(today()+"T00:00:00"); d.setDate(d.getDate()+Number(a)); r.date=d.toISOString().slice(0,10); r.notified=false; saveDB(); render(); toast("Moved to "+dayWord(r.date).toLowerCase()); }); });
+      const d=new Date(today()+"T00:00:00"); d.setDate(d.getDate()+Number(a)); r.date=d.toISOString().slice(0,10); r.notified=false; saveDB(); render(); toast("Moved to "+dayWordIn(r.date)); }); });
   document.querySelectorAll("[data-rwa]").forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); const r=DB.reminders.find(x=>x.id===b.dataset.rwa); if(!r) return;
     const url="https://wa.me/"+waNumber(r.phone); if(window.desktop&&window.desktop.openExternal) window.desktop.openExternal(url); else window.open(url,"_blank"); });
   document.querySelectorAll(".rrow").forEach(el=>el.onclick=(e)=>{ if(e.target.closest("button")) return; openReminder(el.dataset.rid); });
@@ -1488,7 +1489,7 @@ function openReminder(id, prefill){
     <textarea id="rm_src" rows="3" placeholder="Paste the customer’s message, or type it — e.g. “Dec 5 mathak karanna, puthata ekak ganna one”">${esc(v.source||"")}</textarea>
     <div class="row" style="margin-top:8px"><button class="btn" id="rm_ai"><span class="claude-mark" style="display:inline-flex"><i></i></span>Read with Claude</button><span class="hint" id="rm_msg" style="margin:0"></span></div>
     <div class="grid2" style="margin-top:14px">
-      <div><label for="rm_date">Remind on</label><input type="date" id="rm_date" value="${esc(v.date||"")}" min="${r?"":today()}"></div>
+      <div><label for="rm_date">Remind on</label><input type="date" id="rm_date" value="${esc(v.date||"")}" min="${r?"":today()}"><div class="hint" id="rm_dateTxt" style="margin:5px 0 0"></div></div>
       <div><label for="rm_cust">Customer</label><input id="rm_cust" list="rm_custs" value="${esc(v.customer||"")}" autocomplete="off"><datalist id="rm_custs">${custs.map(c=>`<option value="${esc(c.name)}">${esc(c.phone||"")}</option>`).join("")}</datalist></div>
       <div><label for="rm_phone">Phone</label><input id="rm_phone" value="${esc(v.phone||"")}" inputmode="tel"></div>
       <div class="full"><label for="rm_note">What to do</label><input id="rm_note" value="${esc(v.note||"")}" placeholder="E.g. Remind to order a raincoat for her son"></div>
@@ -1497,6 +1498,14 @@ function openReminder(id, prefill){
   openModalBg(); setTimeout(()=>$(r?"#rm_note":"#rm_src").focus(),60);
   const fillPhone=()=>{ const c=custs.find(x=>x.name.toLowerCase()===$("#rm_cust").value.trim().toLowerCase()); if(c && !$("#rm_phone").value) $("#rm_phone").value=c.phone||""; };
   $("#rm_cust").addEventListener("change",fillPhone);
+  // say the date in words, so 06/12 can't silently become 12 June
+  const swapDM=d=>{ const m=String(d||"").match(/^(\d{4})-(\d{2})-(\d{2})$/); if(!m||Number(m[3])>12) return ""; return m[1]+"-"+m[3]+"-"+m[2]; };
+  const dateTxt=()=>{ const d=$("#rm_date").value, el=$("#rm_dateTxt"); if(!d){ el.textContent=""; return; }
+    const words=new Date(d+"T00:00:00").toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+    if(d<today()){ const sw=swapDM(d); el.innerHTML=`<span style="color:var(--red)">${esc(words)} — this day has passed.</span>${sw&&sw>=today()?` <button type="button" class="lane-more" style="padding:0" id="rm_swap">Did you mean ${esc(new Date(sw+"T00:00:00").toLocaleDateString("en-GB",{day:"numeric",month:"long"}))}?</button>`:""}`;
+      if($("#rm_swap")) $("#rm_swap").onclick=()=>{ $("#rm_date").value=sw; dateTxt(); }; }
+    else el.innerHTML=`<b style="color:var(--ink)">${esc(words)}</b> · ${esc(dayWordIn(d))}`; };
+  $("#rm_date").addEventListener("input",dateTxt); $("#rm_date").addEventListener("change",dateTxt); dateTxt();
   $("#rm_c").onclick=closeModal;
   if($("#rm_del")) $("#rm_del").onclick=()=>{ closeModal(); trashIt("reminders", r.id); };
   $("#rm_ai").onclick=async()=>{
@@ -1507,7 +1516,7 @@ function openReminder(id, prefill){
       const now=new Date(), iso=today(), wd=now.toLocaleDateString("en-GB",{weekday:"long"});
       const out = window.__mockClaudeText ? await window.__mockClaudeText(txt) : await callClaudeRaw([{type:"text",text:REMIND_PROMPT(txt, iso, wd)}], 300);
       const j=JSON.parse((out.match(/\{[\s\S]*\}/)||["{}"])[0]);
-      if(j.date && /^\d{4}-\d{2}-\d{2}$/.test(j.date)) $("#rm_date").value=j.date;
+      if(j.date && /^\d{4}-\d{2}-\d{2}$/.test(j.date)){ $("#rm_date").value=j.date; dateTxt(); }
       if(j.customer && !$("#rm_cust").value) $("#rm_cust").value=j.customer;
       if(j.phone && !$("#rm_phone").value) $("#rm_phone").value=j.phone;
       if(j.note) $("#rm_note").value=j.note;
@@ -1520,10 +1529,13 @@ function openReminder(id, prefill){
   $("#rm_s").onclick=()=>{
     const d={ date:$("#rm_date").value, customer:$("#rm_cust").value.trim(), phone:$("#rm_phone").value.trim(), note:$("#rm_note").value.trim(), source:$("#rm_src").value.trim() };
     if(!d.date){ alert("Pick the day to be reminded on (or press “Read with Claude”)."); $("#rm_date").focus(); return; }
+    if(d.date<today() && (!r || d.date!==r.date)){ const sw=swapDM(d.date);
+      alert("That day ("+new Date(d.date+"T00:00:00").toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"})+") has already passed."+(sw&&sw>=today()?"\n\nDid you mean "+new Date(sw+"T00:00:00").toLocaleDateString("en-GB",{day:"numeric",month:"long"})+"? Tap the suggestion under the date.":"\n\nPick a day from today onwards."));
+      $("#rm_date").focus(); return; }
     if(!d.note && !d.customer){ alert("Add the customer or what to do."); $("#rm_note").focus(); return; }
     if(r){ if(r.date!==d.date) r.notified=false; Object.assign(r,d); }
     else DB.reminders.push(Object.assign({ id:uid(), created:new Date().toISOString(), done:false, notified:false }, prefill&&prefill.orderId?{orderId:prefill.orderId}:{}, d));
-    saveDB(); closeModal(); render(); toast("Reminder set for "+dayWord(d.date).toLowerCase());
+    saveDB(); closeModal(); render(); toast("Reminder set for "+dayWordIn(d.date));
     if(d.date<=today()) setTimeout(notifyReminders, 500);
   };
 }
