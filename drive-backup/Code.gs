@@ -120,7 +120,12 @@ function domexToken(fresh) {
     payload: JSON.stringify({ userName: c.user, password: c.pass })
   });
   let j = {}; try { j = JSON.parse(r.getContentText()); } catch (e) {}
-  if (r.getResponseCode() !== 200 || !j.token) throw new Error("Domex sign-in failed (" + r.getResponseCode() + ") — check the Domex username, password and API key");
+  if (r.getResponseCode() !== 200 || !j.token) {
+    // say what Domex answered (never the key or password), so the team can tell them
+    let said = String(j.message || j.title || j.error || r.getContentText() || "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim().slice(0, 180);
+    const c2 = domexCreds(); [c2.key, c2.pass].forEach(x => { if (x) said = said.split(x).join("***"); });
+    throw new Error("Domex sign-in failed (" + r.getResponseCode() + ")" + (said ? ": " + said : "") + " — check the Domex username, password and API key");
+  }
   let ttl = 3600;                                   // keep the token until shortly before it expires
   try { const exp = JSON.parse(Utilities.newBlob(Utilities.base64DecodeWebSafe(j.token.split(".")[1])).getDataAsString()).exp;
         if (exp) ttl = Math.floor(exp - Date.now() / 1000 - 120); } catch (e) {}
