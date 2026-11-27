@@ -79,7 +79,6 @@
   .iconbtn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 
   main{margin-left:232px;flex:1;padding:30px 36px 48px;max-width:1440px;min-width:0}
-  .page{animation:pagein .28s var(--ease)}
   @keyframes pagein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
   h1{font-size:26px;font-weight:600;letter-spacing:-.3px;margin:0 0 4px}
   .sub{color:var(--muted);margin:0 0 22px;font-size:14px}
@@ -376,6 +375,9 @@
 
 
   /* ---------- customer reminders ---------- */
+  .rm-seg{margin:0 0 14px;border-radius:99px;padding:4px}
+  .rm-seg button{padding:8px 14px;border-radius:99px;font-size:13px}
+
   .rcard{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-m);padding:14px 16px 8px;box-shadow:var(--shadow-1);margin-bottom:16px}
   .rcard.due{border-color:var(--brand);box-shadow:inset 0 3px 0 var(--brand),var(--shadow-1)}
   .rcard header{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -396,6 +398,28 @@
     .rrow .act .btn.primary{margin-left:auto}
     .rcard header .btn{margin-left:auto}
   }
+
+  /* ---------- opening splash ---------- */
+  .splash{display:flex;flex-direction:column;align-items:center;gap:22px}
+  .sp-logo{position:relative;width:260px;overflow:hidden;animation:spLogo .9s cubic-bezier(.2,.8,.2,1) both}
+  .sp-logo img{width:260px;display:block}
+  .sp-shine{position:absolute;inset:0;background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.75) 50%,transparent 65%);transform:translateX(-120%);animation:spShine 1.1s .55s ease-out both;mix-blend-mode:soft-light}
+  .sp-bar{width:150px;height:4px;border-radius:99px;background:var(--brand-soft);overflow:hidden;animation:spFade .4s .45s both}
+  .sp-bar i{display:block;width:40%;height:100%;border-radius:99px;background:var(--brand);animation:spSlide 1.1s .5s cubic-bezier(.6,0,.4,1) infinite}
+  .sp-t{font-size:13px;color:var(--muted);animation:spFade .4s .6s both}
+  #boot.on .splash{animation:none}
+  #boot.out{animation:spOut .48s cubic-bezier(.4,0,.2,1) forwards}
+  #boot.out .splash{animation:spLift .48s cubic-bezier(.4,0,.2,1) forwards}
+  @keyframes spLogo{from{opacity:0;transform:translateY(14px) scale(.92);clip-path:inset(0 100% 0 0)}60%{opacity:1}to{opacity:1;transform:none;clip-path:inset(0 0 0 0)}}
+  @keyframes spShine{to{transform:translateX(120%)}}
+  @keyframes spSlide{from{transform:translateX(-110%)}to{transform:translateX(260%)}}
+  @keyframes spFade{from{opacity:0}to{opacity:1}}
+  @keyframes spOut{to{opacity:0}}
+  @keyframes spLift{to{transform:translateY(-18px) scale(1.04)}}
+  /* ---------- page entrance ---------- */
+  #main.enter>*{animation:enterUp .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 70ms)}
+  #main.enter .stats>*,#main.enter .lanes>*,#main.enter .two-1>*,#main.enter .grid4>*{animation:enterUp .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 70ms + var(--j,0) * 70ms + 60ms)}
+  @keyframes enterUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
   @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 
   /* ---------- print ---------- */
@@ -798,7 +822,21 @@ function showLogin(msg){
   $("#lg_go").onclick=go; $("#lg_pass").addEventListener("keydown",e=>{ if(e.key==="Enter") go(); });
   setTimeout(()=>($("#lg_email").value?$("#lg_pass"):$("#lg_email")).focus(),80);
 }
-function showLoading(t){ $("#boot").innerHTML=`<div class="login glass" style="align-items:center"><img class="logo-light" src="logo.png" alt="CoverLanka"><img class="logo-dark" src="logo-dark.png" alt="CoverLanka"><div class="muted"><span class="spin"></span>${esc(t)}</div></div>`; $("#boot").classList.add("on"); }
+let _bootAt=0;
+function showLoading(t){
+  if(!$("#boot .splash")){ _bootAt=Date.now();
+    $("#boot").innerHTML=`<div class="splash" aria-live="polite">
+      <div class="sp-logo"><img class="logo-light" src="logo.png" alt="CoverLanka"><img class="logo-dark" src="logo-dark.png" alt="CoverLanka"><i class="sp-shine" aria-hidden="true"></i></div>
+      <div class="sp-bar" aria-hidden="true"><i></i></div>
+      <div class="sp-t" id="spT"></div></div>`; }
+  $("#spT").textContent=t; $("#boot").classList.remove("out"); $("#boot").classList.add("on");
+}
+/* the splash lifts away once the app is ready (after the logo has finished its entrance) */
+function bootOut(){
+  const b=$("#boot"); if(!b.classList.contains("on")) return;
+  const wait=b.querySelector(".splash")?Math.max(0, 1150-(Date.now()-_bootAt)):0;
+  setTimeout(()=>{ b.classList.add("out"); playEntrance($("#main")); setTimeout(()=>{ b.classList.remove("on","out"); },480); }, wait);
+}
 function showFirstRun(){
   $("#boot").innerHTML=`<div class="login glass" style="max-width:460px">
     <img class="logo-light" src="logo.png" alt="CoverLanka"><img class="logo-dark" src="logo-dark.png" alt="CoverLanka">
@@ -826,7 +864,7 @@ function uploadAll(d){
   saveDB();   // the "last" maps know what is online now, so anything not in the backup gets removed for everyone
   const mo=Math.max(0,...DB.orders.map(o=>num(o.no))), mq=Math.max(0,...DB.quotes.map(q=>num(q.no)));
   window.FB.setDoc(window.FB.doc(CLOUD.db,"meta","counters"),{order:mo,quote:mq},{merge:true}).catch(()=>{});
-  $("#boot").classList.remove("on"); toast("All set — data is online"); render();
+  lastPage=null; bootOut(); toast("All set — data is online"); render();
 }
 
 async function boot(){
@@ -850,8 +888,8 @@ async function boot(){
     const before=JSON.stringify(sharedSettings());
     migrate(DB);
     if(JSON.stringify(sharedSettings())!==before || DB.products.some(p=>p.weightKg==null)) saveDB();
-    $("#boot").classList.remove("on");
     if(location.hash==="#orders"){ page="orders"; history.replaceState(null,"",location.pathname); }
+    lastPage=null; bootOut();
     purgeTrash();
     render();
     if(DB.settings.pinHash) showLock();
@@ -1352,12 +1390,33 @@ function render(){
   document.querySelectorAll(".navlist button").forEach(b=>{ const on=b.dataset.page===page; b.classList.toggle("active", on); if(on) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current"); });
   ({dashboard:renderDashboard, orders:renderOrders, customers:renderCustomers, quotes:renderQuotes, stock:renderStock, expenses:renderExpenses, partners:renderPartners, settings:renderSettings})[page]();
   const m=$("#main");
-  if(page!==lastPage){ m.classList.remove("page"); void m.offsetWidth; m.classList.add("page"); window.scrollTo(0,0); lastPage=page; }
+  if(page!==lastPage){ window.scrollTo(0,0); lastPage=page; if(!$("#boot").classList.contains("on")) playEntrance(m); }
   renderNavTools();
   labelTables();
   document.querySelectorAll("#tabbar [data-tab]").forEach(b=>b.classList.toggle("active", b.dataset.tab===page || (b.dataset.tab==="more" && ["customers","expenses","partners","settings"].includes(page))));
   $("#fab").classList.toggle("hide", !["dashboard","orders","customers"].includes(page));
   setSyncState();
+}
+/* entrance: each section rises in turn, and the dashboard's numbers count up */
+let _enterT=null;
+function playEntrance(m){
+  if(matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  clearTimeout(_enterT); m.classList.remove("enter"); void m.offsetWidth;
+  [...m.children].forEach((el,i)=>el.style.setProperty("--i",Math.min(i,8)));
+  m.querySelectorAll(".stats,.lanes,.two-1,.grid4").forEach(g=>[...g.children].forEach((el,j)=>el.style.setProperty("--j",j)));
+  m.classList.add("enter");
+  if(page==="dashboard") m.querySelectorAll(".stat .v, .hero-num").forEach((el,k)=>countUp(el, 260+k*90));
+  _enterT=setTimeout(()=>m.classList.remove("enter"), 1600);
+}
+function countUp(el, delay){
+  const txt=el.textContent, mm=txt.match(/^(.*?)(\d[\d,]*)(.*)$/s); if(!mm) return;
+  const target=Number(mm[2].replace(/,/g,"")); if(!target || target<4) return;
+  const t0=performance.now()+delay, dur=900, ease=x=>1-Math.pow(1-x,3);
+  el.textContent=mm[1]+"0"+mm[3];
+  const step=now=>{ if(!el.isConnected) return; const x=Math.min(1,Math.max(0,(now-t0)/dur));
+    el.textContent = x>=1 ? txt : mm[1]+Math.round(target*ease(x)).toLocaleString("en-US")+mm[3];
+    if(x<1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
 }
 function labelTables(){
   document.querySelectorAll("#main table").forEach(t=>{
@@ -1422,23 +1481,25 @@ function stockRunway(){
 /* ================= CUSTOMER REMINDERS =================
    "Remind me on the 5th to order again" → a reminder on that day.
    Claude reads the customer's message and fills in the date. */
-const REMIND_PROMPT = (txt, todayIso, weekday) => `You help a small Sri Lankan raincoat shop (CoverLanka) set reminders from customer messages.
+const REMIND_PROMPT = (txt, todayIso, weekday) => `You help a small Sri Lankan raincoat shop (CoverLanka) set reminders that customers ask for.
 Today is ${weekday}, ${todayIso} (Sri Lanka time).
-The message below may be in Sinhala, Singlish (Sinhala in English letters), Tamil or English. It may be a customer's chat message, or a note typed by the shop's team.
+${txt===null ? "The image is a screenshot of a chat between the shop and a customer (WhatsApp, Messenger or similar). The customer's name is usually at the top of the chat. The shop's own messages are usually on the right." : "Below is a customer's chat message, or a note typed by the shop's team."}
+It may be in Sinhala, Singlish (Sinhala in English letters), Tamil or English.
 
 Work out:
-- date: the day the shop should be reminded, as YYYY-MM-DD. Resolve relative dates ("next Friday", "ලබන සතියේ", "dawas 10kin", "ලබන මාසේ 5", "salary day" = the 25th) from today's date. If a month is named without a year, use the next time that date comes. If no day can be worked out, use null.
+- date: the day the CUSTOMER asked to be reminded on, as YYYY-MM-DD. This is the day the shop gets the notification, so use the day they asked for — do not move it earlier or later. "ada"/"අද"/"today" = ${todayIso}. "heta"/"හෙට" = the next day. Resolve "next Friday", "ලබන සතියේ", "dawas 10kin", "ලබන මාසේ 5", "salary day" (= the 25th) from today. If they want to order on a day and ask to be reminded then, use that day. If a month is named without a year, use the next time that date comes. If no day can be found, use null.
 - customer: the customer's name if it appears, else "".
 - phone: a Sri Lankan phone number if it appears (as written), else "".
-- note: one short line in the language the team wrote in (Sinhala or English), saying what to do on that day, e.g. "Remind to order a raincoat for her son" or "පුතාට raincoat එකක් order කරන්න මතක් කරන්න". Do not invent details.
+- note: ONE short line telling the shop's team what to do that day, in simple Sinhala mixed with English words the way Sri Lankan sellers write (e.g. "Raincoat එකක් order කරන්න මතක් කරන්න — පුතාට", "Size L 2ක් ගැන call කරලා අහන්න"). Include useful details the customer gave (item, size, quantity, for whom). Do not invent anything.
+- said: what the customer said, in a few words of their own language (for the team's record).
 
 Reply with only this JSON, nothing else:
-{"date": "YYYY-MM-DD" or null, "customer": "", "phone": "", "note": ""}
-
+{"date": "YYYY-MM-DD" or null, "customer": "", "phone": "", "note": "", "said": ""}
+${txt===null ? "" : `
 Message:
 """
 ${txt}
-"""`;
+"""`}`;
 
 function remindersDue(){ const t=today(); return (DB.reminders||[]).filter(r=>!r.done && r.date && r.date<=t).sort((a,b)=>a.date.localeCompare(b.date)); }
 function remindersUpcoming(){ const t=today(); return (DB.reminders||[]).filter(r=>!r.done && r.date && r.date>t).sort((a,b)=>a.date.localeCompare(b.date)); }
@@ -1479,23 +1540,43 @@ function bindReminderCard(){
   document.querySelectorAll(".rrow").forEach(el=>el.onclick=(e)=>{ if(e.target.closest("button")) return; openReminder(el.dataset.rid); });
 }
 
-/* add / edit — paste the customer's words, Claude fills the rest */
+/* add / edit — the customer's message (typed or a screenshot), Claude fills the rest */
 function openReminder(id, prefill){
   const r=id?(DB.reminders||[]).find(x=>x.id===id):null; const v=r||Object.assign({date:"",customer:"",phone:"",note:"",source:""},prefill||{});
   modalKind="reminder";
   const custs=customers();
+  let mode = "text";
   $("#modal").innerHTML=`<h2>${r?"Reminder":"New reminder"}</h2>
-    <label for="rm_src">What did the customer say?</label>
-    <textarea id="rm_src" rows="3" placeholder="Paste the customer’s message, or type it — e.g. “Dec 5 mathak karanna, puthata ekak ganna one”">${esc(v.source||"")}</textarea>
+    ${r?"":`<div class="seg rm-seg" role="tablist" aria-label="How to add the customer's message">
+      <button role="tab" class="on" data-mode="text" aria-selected="true">Type the message</button>
+      <button role="tab" data-mode="shot" aria-selected="false">Upload a screenshot</button></div>`}
+    <div id="rm_textBox">
+      <label for="rm_src">What did the customer say?</label>
+      <textarea id="rm_src" rows="3" placeholder="Paste or type the customer’s message — e.g. “Dec 5 mathak karanna, puthata ekak ganna one”">${esc(v.source||"")}</textarea>
+    </div>
+    <div id="rm_shotBox" style="display:none">
+      <div class="drop" id="rm_drop">
+        <img id="rm_shot" style="display:none" alt="Chat screenshot">
+        <div class="t"><b>Chat screenshot</b>Press Ctrl+V, drop the image here, or choose it. Claude reads the chat.</div>
+        <button class="btn sm" id="rm_pick">Choose image</button>
+        <input type="file" id="rm_file" accept="image/*" style="display:none">
+      </div>
+    </div>
     <div class="row" style="margin-top:8px"><button class="btn" id="rm_ai"><span class="claude-mark" style="display:inline-flex"><i></i></span>Read with Claude</button><span class="hint" id="rm_msg" style="margin:0"></span></div>
     <div class="grid2" style="margin-top:14px">
       <div><label for="rm_date">Remind on</label><input type="date" id="rm_date" value="${esc(v.date||"")}" min="${r?"":today()}"><div class="hint" id="rm_dateTxt" style="margin:5px 0 0"></div></div>
       <div><label for="rm_cust">Customer</label><input id="rm_cust" list="rm_custs" value="${esc(v.customer||"")}" autocomplete="off"><datalist id="rm_custs">${custs.map(c=>`<option value="${esc(c.name)}">${esc(c.phone||"")}</option>`).join("")}</datalist></div>
       <div><label for="rm_phone">Phone</label><input id="rm_phone" value="${esc(v.phone||"")}" inputmode="tel"></div>
-      <div class="full"><label for="rm_note">What to do</label><input id="rm_note" value="${esc(v.note||"")}" placeholder="E.g. Remind to order a raincoat for her son"></div>
+      <div class="full"><label for="rm_note">What to do <span class="muted" style="font-weight:400">— Claude writes this from the message</span></label><input id="rm_note" value="${esc(v.note||"")}" placeholder="Filled in by Claude"></div>
     </div>
     <div class="actions">${r?'<button class="btn danger" id="rm_del">Delete</button>':""}<button class="btn" id="rm_c">Cancel</button><button class="btn primary" id="rm_s">${r?"Save":"Set reminder"}</button></div>`;
-  openModalBg(); setTimeout(()=>$(r?"#rm_note":"#rm_src").focus(),60);
+  openModalBg(); setTimeout(()=>{ const f=$(r?"#rm_note":"#rm_src"); if(f) f.focus(); },60);
+
+  let shot=null;      // {base64, mediaType} of the chosen screenshot
+  const setMode=m=>{ mode=m; $("#rm_textBox").style.display=m==="text"?"":"none"; $("#rm_shotBox").style.display=m==="shot"?"":"none";
+    $("#modal").querySelectorAll(".rm-seg button").forEach(b=>{ const on=b.dataset.mode===m; b.classList.toggle("on",on); b.setAttribute("aria-selected",on); }); };
+  $("#modal").querySelectorAll(".rm-seg button").forEach(b=>b.onclick=()=>setMode(b.dataset.mode));
+
   const fillPhone=()=>{ const c=custs.find(x=>x.name.toLowerCase()===$("#rm_cust").value.trim().toLowerCase()); if(c && !$("#rm_phone").value) $("#rm_phone").value=c.phone||""; };
   $("#rm_cust").addEventListener("change",fillPhone);
   // say the date in words, so 06/12 can't silently become 12 June
@@ -1504,30 +1585,54 @@ function openReminder(id, prefill){
     const words=new Date(d+"T00:00:00").toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
     if(d<today()){ const sw=swapDM(d); el.innerHTML=`<span style="color:var(--red)">${esc(words)} — this day has passed.</span>${sw&&sw>=today()?` <button type="button" class="lane-more" style="padding:0" id="rm_swap">Did you mean ${esc(new Date(sw+"T00:00:00").toLocaleDateString("en-GB",{day:"numeric",month:"long"}))}?</button>`:""}`;
       if($("#rm_swap")) $("#rm_swap").onclick=()=>{ $("#rm_date").value=sw; dateTxt(); }; }
-    else el.innerHTML=`<b style="color:var(--ink)">${esc(words)}</b> · ${esc(dayWordIn(d))}`; };
+    else el.innerHTML=`<b style="color:var(--ink)">${esc(words)}</b>${d===today()?" · today — the team is told right away":""}`; };
   $("#rm_date").addEventListener("input",dateTxt); $("#rm_date").addEventListener("change",dateTxt); dateTxt();
+
   $("#rm_c").onclick=closeModal;
   if($("#rm_del")) $("#rm_del").onclick=()=>{ closeModal(); trashIt("reminders", r.id); };
-  $("#rm_ai").onclick=async()=>{
-    const txt=$("#rm_src").value.trim(), m=$("#rm_msg"), b=$("#rm_ai"); if(!txt){ $("#rm_src").focus(); return; }
-    if(!(DB.settings.claudeKey||"").trim() && !window.__mockClaudeText){ m.textContent="Claude is not connected — fill in the date below yourself."; return; }
-    b.disabled=true; m.innerHTML='<span class="spin"></span>Claude is reading…';
+
+  let busy=false;
+  const read=async()=>{
+    if(busy) return; const m=$("#rm_msg"), b=$("#rm_ai");
+    const txt=$("#rm_src")?$("#rm_src").value.trim():"";
+    if(mode==="text" && !txt){ $("#rm_src").focus(); return; }
+    if(mode==="shot" && !shot){ m.textContent="Choose the chat screenshot first."; return; }
+    if(!(DB.settings.claudeKey||"").trim() && !window.__mockClaudeText){ m.textContent="Claude is not connected — fill in the details below yourself."; return; }
+    busy=true; b.disabled=true; m.innerHTML='<span class="spin"></span>Claude is reading…';
     try{
-      const now=new Date(), iso=today(), wd=now.toLocaleDateString("en-GB",{weekday:"long"});
-      const out = window.__mockClaudeText ? await window.__mockClaudeText(txt) : await callClaudeRaw([{type:"text",text:REMIND_PROMPT(txt, iso, wd)}], 300);
+      const iso=today(), wd=new Date().toLocaleDateString("en-GB",{weekday:"long"});
+      const content = mode==="shot"
+        ? [{type:"image",source:{type:"base64",media_type:shot.mediaType,data:shot.base64}},{type:"text",text:REMIND_PROMPT(null, iso, wd)}]
+        : [{type:"text",text:REMIND_PROMPT(txt, iso, wd)}];
+      const out = window.__mockClaudeText ? await window.__mockClaudeText(mode==="shot"?"[image]":txt) : await callClaudeRaw(content, 400);
       const j=JSON.parse((out.match(/\{[\s\S]*\}/)||["{}"])[0]);
       if(j.date && /^\d{4}-\d{2}-\d{2}$/.test(j.date)){ $("#rm_date").value=j.date; dateTxt(); }
       if(j.customer && !$("#rm_cust").value) $("#rm_cust").value=j.customer;
       if(j.phone && !$("#rm_phone").value) $("#rm_phone").value=j.phone;
       if(j.note) $("#rm_note").value=j.note;
+      if(mode==="shot" && j.said) $("#rm_src").value=j.said;
       fillPhone();
-      m.innerHTML = j.date ? `✔ ${esc(dayWord(j.date))} — check the details and press “Set reminder”.` : "Claude could not find a date — pick it below.";
+      m.innerHTML = j.date ? `✔ ${esc(dayWord(j.date))} — check the details and press “Set reminder”.` : "Claude could not find the day — pick it below.";
       if(!j.date) $("#rm_date").focus();
-    }catch(e){ m.textContent = e.message==="NO_KEY" ? "Claude is not connected — fill in the date below yourself." : "Claude could not read it ("+e.message+"). Fill in the date below."; }
-    b.disabled=false;
+    }catch(e){ m.textContent = e.message==="NO_KEY" ? "Claude is not connected — fill in the details below yourself." : "Claude could not read it ("+e.message+"). Fill in the details below."; }
+    busy=false; b.disabled=false;
   };
+  $("#rm_ai").onclick=read;
+  // read by itself when a message is pasted, or a screenshot is chosen
+  if($("#rm_src")) $("#rm_src").addEventListener("paste",()=>setTimeout(()=>{ if(!$("#rm_note").value) read(); },120));
+  const useShot=async file=>{
+    try{ const img=await imageToJpegBase64(file); shot={ base64:img.base64, mediaType:img.mediaType }; const el=$("#rm_shot"); el.src=img.dataUrl; el.style.display="block"; setMode("shot"); read(); }
+    catch(e){ $("#rm_msg").textContent="Could not open that image — try another screenshot."; } };
+  window.__reminderShot = useShot;          // Ctrl+V of an image while this window is open
+  $("#rm_pick").onclick=()=>$("#rm_file").click();
+  $("#rm_file").onchange=e=>{ const f=e.target.files[0]; if(f) useShot(f); };
+  const dz=$("#rm_drop");
+  dz.addEventListener("dragover",e=>{ e.preventDefault(); dz.classList.add("over"); });
+  dz.addEventListener("dragleave",()=>dz.classList.remove("over"));
+  dz.addEventListener("drop",e=>{ e.preventDefault(); dz.classList.remove("over"); const f=[...e.dataTransfer.files].find(f=>f.type.startsWith("image/")); if(f) useShot(f); });
+
   $("#rm_s").onclick=()=>{
-    const d={ date:$("#rm_date").value, customer:$("#rm_cust").value.trim(), phone:$("#rm_phone").value.trim(), note:$("#rm_note").value.trim(), source:$("#rm_src").value.trim() };
+    const d={ date:$("#rm_date").value, customer:$("#rm_cust").value.trim(), phone:$("#rm_phone").value.trim(), note:$("#rm_note").value.trim(), source:($("#rm_src")?$("#rm_src").value.trim():"")||(shot?"(screenshot)":"") };
     if(!d.date){ alert("Pick the day to be reminded on (or press “Read with Claude”)."); $("#rm_date").focus(); return; }
     if(d.date<today() && (!r || d.date!==r.date)){ const sw=swapDM(d.date);
       alert("That day ("+new Date(d.date+"T00:00:00").toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"})+") has already passed."+(sw&&sw>=today()?"\n\nDid you mean "+new Date(sw+"T00:00:00").toLocaleDateString("en-GB",{day:"numeric",month:"long"})+"? Tap the suggestion under the date.":"\n\nPick a day from today onwards."));
@@ -1536,7 +1641,7 @@ function openReminder(id, prefill){
     if(r){ if(r.date!==d.date) r.notified=false; Object.assign(r,d); }
     else DB.reminders.push(Object.assign({ id:uid(), created:new Date().toISOString(), done:false, notified:false }, prefill&&prefill.orderId?{orderId:prefill.orderId}:{}, d));
     saveDB(); closeModal(); render(); toast("Reminder set for "+dayWordIn(d.date));
-    if(d.date<=today()) setTimeout(notifyReminders, 500);
+    if(d.date<=today()) setTimeout(()=>notifyReminders(true), 500);     // asked for today → tell the team now
   };
 }
 function openReminderList(){
@@ -1552,8 +1657,8 @@ function openReminderList(){
   $("#modal").querySelectorAll(".rrow").forEach(el=>el.onclick=()=>openReminder(el.dataset.rid));
 }
 /* on the day, from 8 am, tell the whole team once */
-function notifyReminders(){
-  if(!CLOUD.ready || new Date().getHours()<8) return;
+function notifyReminders(now){
+  if(!CLOUD.ready || (!now && new Date().getHours()<8)) return;
   const due=remindersDue().filter(r=>!r.notified); if(!due.length) return;
   due.forEach(r=>r.notified=true); saveDB();
   if(DB.settings.notifyReminders===false || !(DB.devices||[]).length || !driveUrl()) return;
@@ -1927,7 +2032,8 @@ document.addEventListener("paste", e=>{
   const item=[...(e.clipboardData?e.clipboardData.items:[])].find(i=>i.type.startsWith("image/"));
   if(!item) return;
   const file=item.getAsFile(); e.preventDefault();
-  if(modalKind==="order") readScreenshot(file, ()=>$("#f_customer")&&$("#f_customer").dispatchEvent(new Event("input")));
+  if(modalKind==="reminder" && window.__reminderShot) window.__reminderShot(file);
+  else if(modalKind==="order") readScreenshot(file, ()=>$("#f_customer")&&$("#f_customer").dispatchEvent(new Event("input")));
   else if(!modalKind) openOrder(null, null, file);
 });
 
