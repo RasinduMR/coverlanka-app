@@ -1,5 +1,5 @@
 // CoverLanka Manager — keeps the app working offline. Data sync is handled by Firebase.
-const CACHE = "coverlanka-v12-2";
+const CACHE = "coverlanka-v13";
 const SHELL = ["./","index.html","config.js","firebase-bundle.js","logo.png","logo-dark.png","icon.png","manifest.webmanifest",
   "icons/icon-192.png","icons/icon-512.png","icons/badge-96.png","icons/apple-touch-icon.png",
   "fonts/outfit-latin-400-normal.woff2","fonts/outfit-latin-500-normal.woff2","fonts/outfit-latin-600-normal.woff2","fonts/outfit-latin-700-normal.woff2",
